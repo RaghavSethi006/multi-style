@@ -14,23 +14,21 @@ import { copyToClipboard, downloadFile } from '@/utils/download';
 import { toast } from '@/hooks/use-toast';
 
 export const CodeView = () => {
-  const { buttonConfig, selectedFramework, selectedComponent } = useCustomizationStore();
+  const { componentConfig, selectedFramework, selectedComponent } = useCustomizationStore();
   const [copied, setCopied] = useState(false);
 
   const getCode = () => {
-    if (selectedComponent !== 'Standard Button') return '// Component not yet implemented';
-
     switch (selectedFramework) {
       case 'react':
-        return generateReactCode(buttonConfig);
+        return generateReactCode(componentConfig);
       case 'angular':
-        return generateAngularCode(buttonConfig);
+        return generateAngularCode(componentConfig);
       case 'streamlit':
-        return generateStreamlitCode(buttonConfig);
+        return generateStreamlitCode(componentConfig);
       case 'tkinter':
-        return generateTkinterCode(buttonConfig);
+        return generateTkinterCode(componentConfig);
       case 'winui3':
-        return generateWinUI3Code(buttonConfig);
+        return generateWinUI3Code(componentConfig);
       default:
         return '';
     }
@@ -81,7 +79,7 @@ export const CodeView = () => {
   };
 
   const handleDownload = () => {
-    const filename = `custom-button.${getFileExtension()}`;
+    const filename = `component.${getFileExtension()}`;
     downloadFile(getCode(), filename);
     toast({
       title: 'Downloaded!',

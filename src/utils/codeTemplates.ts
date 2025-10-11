@@ -1,6 +1,6 @@
-import { ButtonConfig } from '@/store/useCustomizationStore';
+import { ComponentConfig } from '@/store/useCustomizationStore';
 
-export const generateReactCode = (config: ButtonConfig): string => {
+export const generateReactCode = (config: ComponentConfig): string => {
   const iconImports = [];
   if (config.prefixIcon) iconImports.push(config.prefixIcon);
   if (config.suffixIcon) iconImports.push(config.suffixIcon);
@@ -10,31 +10,54 @@ export const generateReactCode = (config: ButtonConfig): string => {
       ? `import { ${iconImports.join(', ')} } from 'lucide-react';\n`
       : '';
 
-  const animationClass = config.animation !== 'none' ? ` animate-${config.animation}` : '';
-
   return `${iconImportStatement}
-const CustomButton = () => {
+const CustomComponent = () => {
   return (
     <button
-      className="transition-all${animationClass}"
+      className="transition-all"
       style={{
         fontFamily: '${config.fontFamily}',
         fontSize: '${config.fontSize}px',
         fontWeight: ${config.fontWeight},
+        fontStyle: '${config.fontStyle}',
+        lineHeight: ${config.lineHeight},
+        letterSpacing: '${config.letterSpacing}px',
+        textAlign: '${config.textAlign}',
+        textDecoration: '${config.textDecoration}',
+        textTransform: '${config.textTransform}',
         backgroundColor: '${config.backgroundColor}',
         color: '${config.textColor}',
-        border: '${config.borderWidth}px solid ${config.borderColor}',
+        border: '${config.borderWidth}px ${config.borderStyle} ${config.borderColor}',
         borderRadius: '${config.borderRadius}px',
-        padding: '${config.padding}px ${config.padding * 2}px',
-        width: '${config.width}px',
-        height: '${config.height}px',
-        boxShadow: '0 ${config.elevation}px ${config.elevation * 2}px rgba(0,0,0,0.1)',
+        padding: '${config.paddingTop}px ${config.paddingRight}px ${config.paddingBottom}px ${config.paddingLeft}px',
+        margin: '${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px',
+        width: '${config.width}',
+        height: '${config.height}',
+        minWidth: '${config.minWidth}',
+        maxWidth: '${config.maxWidth}',
+        minHeight: '${config.minHeight}',
+        maxHeight: '${config.maxHeight}',
+        boxShadow: '${config.boxShadow}',
+        textShadow: '${config.textShadow}',
+        opacity: ${config.opacity},
         cursor: ${config.disabledState ? "'not-allowed'" : "'pointer'"},
-        opacity: ${config.disabledState ? 0.5 : 1},
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
+        display: '${config.display}',
+        position: '${config.position}',
+        top: '${config.top}',
+        left: '${config.left}',
+        right: '${config.right}',
+        bottom: '${config.bottom}',
+        zIndex: ${config.zIndex},
+        flexDirection: '${config.flexDirection}',
+        justifyContent: '${config.justifyContent}',
+        alignItems: '${config.alignItems}',
+        gap: '${config.gap}px',
+        transition: '${config.transitionProperty} ${config.transitionDuration}ms ${config.transitionTimingFunction} ${config.transitionDelay}ms',
+        backgroundImage: '${config.gradient || config.backgroundImage}',
+        backgroundPosition: '${config.backgroundPosition}',
+        backgroundRepeat: '${config.backgroundRepeat}',
+        backgroundSize: '${config.backgroundSize}',
+        backgroundAttachment: '${config.backgroundAttachment}',
       }}
       ${config.disabledState ? 'disabled' : ''}
     >
@@ -45,28 +68,38 @@ const CustomButton = () => {
   );
 };
 
-export default CustomButton;`;
+export default CustomComponent;`;
 };
 
-export const generateAngularCode = (config: ButtonConfig): string => {
-  return `<!-- custom-button.component.html -->
+export const generateAngularCode = (config: ComponentConfig): string => {
+  return `<!-- custom-component.component.html -->
 <button
-  class="custom-button${config.animation !== 'none' ? ` ${config.animation}` : ''}"
+  class="custom-button"
   [disabled]="${config.disabledState}"
   [ngStyle]="{
     'font-family': '${config.fontFamily}',
     'font-size': '${config.fontSize}px',
     'font-weight': ${config.fontWeight},
+    'font-style': '${config.fontStyle}',
+    'line-height': ${config.lineHeight},
+    'letter-spacing': '${config.letterSpacing}px',
+    'text-align': '${config.textAlign}',
+    'text-decoration': '${config.textDecoration}',
+    'text-transform': '${config.textTransform}',
     'background-color': '${config.backgroundColor}',
     'color': '${config.textColor}',
-    'border': '${config.borderWidth}px solid ${config.borderColor}',
+    'border': '${config.borderWidth}px ${config.borderStyle} ${config.borderColor}',
     'border-radius': '${config.borderRadius}px',
-    'padding': '${config.padding}px ${config.padding * 2}px',
-    'width': '${config.width}px',
-    'height': '${config.height}px',
-    'box-shadow': '0 ${config.elevation}px ${config.elevation * 2}px rgba(0,0,0,0.1)',
+    'padding': '${config.paddingTop}px ${config.paddingRight}px ${config.paddingBottom}px ${config.paddingLeft}px',
+    'margin': '${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px',
+    'width': '${config.width}',
+    'height': '${config.height}',
+    'box-shadow': '${config.boxShadow}',
+    'opacity': ${config.opacity},
     'cursor': ${config.disabledState ? "'not-allowed'" : "'pointer'"},
-    'opacity': ${config.disabledState ? 0.5 : 1}
+    'display': '${config.display}',
+    'position': '${config.position}',
+    'z-index': ${config.zIndex}
   }"
 >
   ${config.prefixIcon ? `<mat-icon>${config.prefixIcon.toLowerCase()}</mat-icon>` : ''}
@@ -74,21 +107,21 @@ export const generateAngularCode = (config: ButtonConfig): string => {
   ${config.suffixIcon ? `<mat-icon>${config.suffixIcon.toLowerCase()}</mat-icon>` : ''}
 </button>
 
-<!-- custom-button.component.ts -->
+<!-- custom-component.component.ts -->
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-custom-button',
-  templateUrl: './custom-button.component.html',
-  styleUrls: ['./custom-button.component.css']
+  selector: 'app-custom-component',
+  templateUrl: './custom-component.component.html',
+  styleUrls: ['./custom-component.component.css']
 })
-export class CustomButtonComponent {}`;
+export class CustomComponentComponent {}`;
 };
 
-export const generateStreamlitCode = (config: ButtonConfig): string => {
+export const generateStreamlitCode = (config: ComponentConfig): string => {
   return `import streamlit as st
 
-# Custom button with Streamlit
+# Custom component with Streamlit
 if st.button(
     "${config.text}",
     key="custom_button",
@@ -104,31 +137,37 @@ st.markdown("""
     font-family: ${config.fontFamily};
     font-size: ${config.fontSize}px;
     font-weight: ${config.fontWeight};
+    font-style: ${config.fontStyle};
+    line-height: ${config.lineHeight};
+    letter-spacing: ${config.letterSpacing}px;
+    text-align: ${config.textAlign};
+    text-decoration: ${config.textDecoration};
+    text-transform: ${config.textTransform};
     background-color: ${config.backgroundColor};
     color: ${config.textColor};
-    border: ${config.borderWidth}px solid ${config.borderColor};
+    border: ${config.borderWidth}px ${config.borderStyle} ${config.borderColor};
     border-radius: ${config.borderRadius}px;
-    padding: ${config.padding}px ${config.padding * 2}px;
-    width: ${config.width}px;
-    height: ${config.height}px;
-    box-shadow: 0 ${config.elevation}px ${config.elevation * 2}px rgba(0,0,0,0.1);
+    padding: ${config.paddingTop}px ${config.paddingRight}px ${config.paddingBottom}px ${config.paddingLeft}px;
+    width: ${config.width};
+    height: ${config.height};
+    box-shadow: ${config.boxShadow};
     cursor: ${config.disabledState ? 'not-allowed' : 'pointer'};
-    opacity: ${config.disabledState ? 0.5 : 1};
-    transition: all 0.3s ease;
+    opacity: ${config.opacity};
+    transition: all ${config.transitionDuration}ms ${config.transitionTimingFunction};
 }
 
 .stButton > button:hover {
-    ${config.hoverEffect ? `transform: translateY(-2px);\n    box-shadow: 0 ${config.elevation + 2}px ${(config.elevation + 2) * 2}px rgba(0,0,0,0.15);` : ''}
+    ${config.hoverEffect ? `transform: translateY(-2px);` : ''}
 }
 </style>
 """, unsafe_allow_html=True)`;
 };
 
-export const generateTkinterCode = (config: ButtonConfig): string => {
+export const generateTkinterCode = (config: ComponentConfig): string => {
   return `import tkinter as tk
 from tkinter import ttk
 
-class CustomButton:
+class CustomComponent:
     def __init__(self, parent):
         self.button = tk.Button(
             parent,
@@ -143,10 +182,8 @@ class CustomButton:
             highlightthickness=0,
             cursor="${config.disabledState ? 'arrow' : 'hand2'}",
             state="${config.disabledState ? 'disabled' : 'normal'}",
-            width=${Math.floor(config.width / 8)},
-            height=${Math.floor(config.height / 20)},
-            padx=${config.padding * 2},
-            pady=${config.padding},
+            padx=${config.paddingLeft},
+            pady=${config.paddingTop},
             command=self.on_click
         )
         
@@ -164,14 +201,14 @@ class CustomButton:
 
 # Usage
 root = tk.Tk()
-root.title("Custom Button")
-custom_btn = CustomButton(root)
+root.title("Custom Component")
+custom_btn = CustomComponent(root)
 custom_btn.button.pack(padx=20, pady=20)
 root.mainloop()`;
 };
 
-export const generateWinUI3Code = (config: ButtonConfig): string => {
-  return `<!-- CustomButton.xaml -->
+export const generateWinUI3Code = (config: ComponentConfig): string => {
+  return `<!-- CustomComponent.xaml -->
 <Button
     x:Name="CustomButton"
     Content="${config.text}"
@@ -179,7 +216,7 @@ export const generateWinUI3Code = (config: ButtonConfig): string => {
     Height="${config.height}"
     IsEnabled="${!config.disabledState}"
     CornerRadius="${config.borderRadius}"
-    Padding="${config.padding},${config.padding}"
+    Padding="${config.paddingLeft},${config.paddingTop},${config.paddingRight},${config.paddingBottom}"
     FontFamily="${config.fontFamily}"
     FontSize="${config.fontSize}"
     FontWeight="${config.fontWeight >= 600 ? 'Bold' : 'Normal'}"
@@ -229,8 +266,6 @@ export const generateWinUI3Code = (config: ButtonConfig): string => {
 </Button>`;
 };
 
-// Helper function for color manipulation (placeholder)
-// In production, would use a proper color library
 const lightenColor = (color: string): string => {
   return color;
 };
