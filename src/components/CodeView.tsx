@@ -2,7 +2,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Copy, Download, Check } from 'lucide-react';
 import { useState } from 'react';
-import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { useCustomizationStore, Framework } from '@/store/useCustomizationStore';
 import {
   generateReactCode,
   generateAngularCode,
@@ -12,9 +12,18 @@ import {
 } from '@/utils/codeTemplates';
 import { copyToClipboard, downloadFile } from '@/utils/download';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
+const frameworks: { value: Framework; label: string; ext: string }[] = [
+  { value: 'react', label: 'React', ext: 'tsx' },
+  { value: 'angular', label: 'Angular', ext: 'ts' },
+  { value: 'streamlit', label: 'Streamlit', ext: 'py' },
+  { value: 'tkinter', label: 'Tkinter', ext: 'py' },
+  { value: 'winui3', label: 'WinUI3', ext: 'xaml' },
+];
 
 export const CodeView = () => {
-  const { componentConfig, selectedFramework, selectedComponent } = useCustomizationStore();
+  const { componentConfig, selectedFramework, setSelectedFramework } = useCustomizationStore();
   const [copied, setCopied] = useState(false);
 
   const getCode = () => {
@@ -51,19 +60,7 @@ export const CodeView = () => {
   };
 
   const getFileExtension = () => {
-    switch (selectedFramework) {
-      case 'react':
-        return 'tsx';
-      case 'angular':
-        return 'ts';
-      case 'streamlit':
-      case 'tkinter':
-        return 'py';
-      case 'winui3':
-        return 'xaml';
-      default:
-        return 'txt';
-    }
+    return frameworks.find(f => f.value === selectedFramework)?.ext || 'txt';
   };
 
   const handleCopy = async () => {
@@ -90,34 +87,45 @@ export const CodeView = () => {
   const code = getCode();
 
   return (
-    <div className="flex-1 flex flex-col bg-[#1E1E1E] text-white">
-      <div className="flex items-center justify-between px-6 py-4 bg-[#252526] border-b border-[#3E3E42]">
-        <div className="flex items-center gap-3">
-          <h3 className="text-sm font-semibold">Code Output</h3>
-          <span className="px-2.5 py-1 bg-primary/20 text-primary rounded-md text-xs font-medium">
-            {selectedFramework.toUpperCase()}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
+    <div className="flex-1 flex flex-col overflow-hidden">
+      {/* Framework Tabs */}
+      <div className="flex items-center gap-1 px-4 py-2 bg-[#252526] border-b border-[#3E3E42] overflow-x-auto">
+        {frameworks.map((fw) => (
           <button
-            onClick={handleCopy}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover rounded-lg transition-fast text-sm font-medium"
+            key={fw.value}
+            onClick={() => setSelectedFramework(fw.value)}
+            className={cn(
+              'px-3 py-1.5 text-xs font-medium rounded transition-colors whitespace-nowrap',
+              selectedFramework === fw.value
+                ? 'bg-primary text-primary-foreground'
+                : 'text-gray-400 hover:text-white hover:bg-[#3E3E42]'
+            )}
           >
-            {copied ? <Check size={16} /> : <Copy size={16} />}
-            {copied ? 'Copied!' : 'Copy'}
+            {fw.label}
           </button>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary-hover rounded-lg transition-fast text-sm font-medium"
-          >
-            <Download size={16} />
-            Download
-          </button>
-        </div>
+        ))}
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
+      {/* Actions */}
+      <div className="flex items-center gap-2 px-4 py-2 bg-[#2D2D2D] border-b border-[#3E3E42]">
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground rounded transition-colors"
+        >
+          {copied ? <Check size={14} /> : <Copy size={14} />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[#3E3E42] hover:bg-[#4E4E52] text-white rounded transition-colors"
+        >
+          <Download size={14} />
+          Download
+        </button>
+      </div>
+
+      {/* Code */}
+      <div className="flex-1 overflow-auto p-4">
         <SyntaxHighlighter
           language={getLanguage()}
           style={vscDarkPlus}
@@ -125,8 +133,8 @@ export const CodeView = () => {
             background: 'transparent',
             padding: 0,
             margin: 0,
-            fontSize: '14px',
-            lineHeight: '1.6',
+            fontSize: '13px',
+            lineHeight: '1.5',
           }}
           showLineNumbers
         >

@@ -1,12 +1,21 @@
 import { create } from 'zustand';
 
 export type Framework = 'react' | 'angular' | 'streamlit' | 'tkinter' | 'winui3';
+export type ComponentState = 'default' | 'hover' | 'active' | 'focus' | 'disabled';
+export type PreviewBackground = 'light' | 'dark' | 'checkered';
+
+export interface StateStyles {
+  backgroundColor: string;
+  textColor: string;
+  borderColor: string;
+  boxShadow: string;
+}
 
 export interface ComponentConfig {
   // Content
   text: string;
-  placeholder?: string;
-  label?: string;
+  placeholder: string;
+  label: string;
   
   // Typography
   fontFamily: string;
@@ -47,10 +56,6 @@ export interface ComponentConfig {
   // Display & Position
   display: 'block' | 'inline' | 'flex' | 'grid' | 'inline-block' | 'none';
   position: 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
-  top: string;
-  left: string;
-  right: string;
-  bottom: string;
   zIndex: number;
   
   // Borders
@@ -61,79 +66,78 @@ export interface ComponentConfig {
   borderTopRightRadius: number;
   borderBottomLeftRadius: number;
   borderBottomRightRadius: number;
+  linkBorderRadius: boolean;
   
   // Shadows
-  boxShadow: string;
-  textShadow: string;
+  boxShadowX: number;
+  boxShadowY: number;
+  boxShadowBlur: number;
+  boxShadowSpread: number;
+  boxShadowColor: string;
+  boxShadowInset: boolean;
   
-  // Backgrounds
-  backgroundImage: string;
-  backgroundPosition: string;
-  backgroundRepeat: 'repeat' | 'no-repeat' | 'repeat-x' | 'repeat-y';
-  backgroundSize: 'auto' | 'cover' | 'contain';
-  backgroundAttachment: 'scroll' | 'fixed';
-  gradient: string;
+  // Effects
+  glassmorphism: boolean;
+  glassBlur: number;
+  glassOpacity: number;
   
-  // Flexbox
-  flexDirection: 'row' | 'column' | 'row-reverse' | 'column-reverse';
-  flexWrap: 'nowrap' | 'wrap' | 'wrap-reverse';
-  justifyContent: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
-  alignItems: 'flex-start' | 'center' | 'flex-end' | 'stretch' | 'baseline';
-  alignContent: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'stretch';
-  flexGrow: number;
-  flexShrink: number;
-  order: number;
+  // Gradient
+  useGradient: boolean;
+  gradientType: 'linear' | 'radial';
+  gradientAngle: number;
+  gradientStart: string;
+  gradientEnd: string;
   
-  // Grid
-  gridTemplateColumns: string;
-  gridTemplateRows: string;
-  gridGap: number;
-  
-  // Transitions & Animations
-  transitionProperty: string;
+  // Transitions
   transitionDuration: number;
-  transitionDelay: number;
-  transitionTimingFunction: 'ease' | 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
-  animation: string;
-  animationDuration: number;
-  animationIterationCount: number | 'infinite';
-  animationTimingFunction: 'ease' | 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
-  animationDirection: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
-  animationFillMode: 'none' | 'forwards' | 'backwards' | 'both';
+  transitionEasing: 'ease' | 'linear' | 'ease-in' | 'ease-out' | 'ease-in-out';
   
-  // Component-specific
-  prefixIcon?: string;
-  suffixIcon?: string;
-  variant?: string;
-  type?: string;
-  options?: string[];
-  rows?: number;
-  columns?: number;
+  // State Styles
+  stateStyles: {
+    hover: StateStyles;
+    active: StateStyles;
+    focus: StateStyles;
+    disabled: StateStyles;
+  };
   
-  // States
-  hoverEffect: boolean;
-  focusEffect: boolean;
-  disabledState: boolean;
+  // Component-specific: Button
+  buttonIcon: string;
+  buttonIconPosition: 'left' | 'right';
+  buttonLoading: boolean;
+  buttonFullWidth: boolean;
+  
+  // Component-specific: Input
+  inputType: 'text' | 'password' | 'email' | 'number' | 'search';
+  inputIcon: string;
+  inputRequired: boolean;
+  inputValidationState: 'none' | 'error' | 'success';
+  
+  // Component-specific: Card
+  cardImage: string;
+  cardShowHeader: boolean;
+  cardShowFooter: boolean;
+  cardElevation: number;
+  
+  // Component-specific: Modal
+  modalOverlayOpacity: number;
+  modalCloseOnOverlay: boolean;
+  modalAnimation: 'fade' | 'slide' | 'scale';
+  
+  // Visibility
+  visible: boolean;
 }
 
-interface CustomizationState {
-  selectedCategory: string;
-  selectedComponent: string;
-  selectedFramework: Framework;
-  showCodeView: boolean;
-  componentConfig: ComponentConfig;
-  setSelectedCategory: (category: string) => void;
-  setSelectedComponent: (component: string) => void;
-  setSelectedFramework: (framework: Framework) => void;
-  toggleCodeView: () => void;
-  updateComponentConfig: (updates: Partial<ComponentConfig>) => void;
-  resetComponentConfig: () => void;
-}
+const defaultStateStyles: StateStyles = {
+  backgroundColor: '',
+  textColor: '',
+  borderColor: '',
+  boxShadow: '',
+};
 
-const defaultComponentConfig: ComponentConfig = {
+export const defaultComponentConfig: ComponentConfig = {
   text: 'Click Me',
-  placeholder: '',
-  label: '',
+  placeholder: 'Enter text...',
+  label: 'Label',
   fontFamily: 'Inter',
   fontSize: 16,
   fontWeight: 500,
@@ -164,10 +168,6 @@ const defaultComponentConfig: ComponentConfig = {
   maxHeight: '',
   display: 'flex',
   position: 'relative',
-  top: '',
-  left: '',
-  right: '',
-  bottom: '',
   zIndex: 0,
   borderWidth: 0,
   borderStyle: 'solid',
@@ -176,60 +176,102 @@ const defaultComponentConfig: ComponentConfig = {
   borderTopRightRadius: 12,
   borderBottomLeftRadius: 12,
   borderBottomRightRadius: 12,
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  textShadow: '',
-  backgroundImage: '',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  backgroundSize: 'cover',
-  backgroundAttachment: 'scroll',
-  gradient: '',
-  flexDirection: 'row',
-  flexWrap: 'nowrap',
-  justifyContent: 'center',
-  alignItems: 'center',
-  alignContent: 'stretch',
-  flexGrow: 0,
-  flexShrink: 1,
-  order: 0,
-  gridTemplateColumns: '',
-  gridTemplateRows: '',
-  gridGap: 0,
-  transitionProperty: 'all',
-  transitionDuration: 300,
-  transitionDelay: 0,
-  transitionTimingFunction: 'ease',
-  animation: 'none',
-  animationDuration: 1,
-  animationIterationCount: 1,
-  animationTimingFunction: 'ease',
-  animationDirection: 'normal',
-  animationFillMode: 'none',
-  prefixIcon: '',
-  suffixIcon: '',
-  variant: 'primary',
-  type: 'button',
-  options: [],
-  rows: 3,
-  columns: 3,
-  hoverEffect: true,
-  focusEffect: true,
-  disabledState: false,
+  linkBorderRadius: true,
+  boxShadowX: 0,
+  boxShadowY: 2,
+  boxShadowBlur: 4,
+  boxShadowSpread: 0,
+  boxShadowColor: 'rgba(0,0,0,0.1)',
+  boxShadowInset: false,
+  glassmorphism: false,
+  glassBlur: 10,
+  glassOpacity: 0.2,
+  useGradient: false,
+  gradientType: 'linear',
+  gradientAngle: 135,
+  gradientStart: '#3B82F6',
+  gradientEnd: '#8B5CF6',
+  transitionDuration: 200,
+  transitionEasing: 'ease',
+  stateStyles: {
+    hover: { ...defaultStateStyles, backgroundColor: '#2563EB' },
+    active: { ...defaultStateStyles, backgroundColor: '#1D4ED8' },
+    focus: { ...defaultStateStyles, borderColor: '#60A5FA', boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.3)' },
+    disabled: { ...defaultStateStyles, backgroundColor: '#9CA3AF', textColor: '#6B7280' },
+  },
+  buttonIcon: '',
+  buttonIconPosition: 'left',
+  buttonLoading: false,
+  buttonFullWidth: false,
+  inputType: 'text',
+  inputIcon: '',
+  inputRequired: false,
+  inputValidationState: 'none',
+  cardImage: '',
+  cardShowHeader: true,
+  cardShowFooter: true,
+  cardElevation: 2,
+  modalOverlayOpacity: 0.5,
+  modalCloseOnOverlay: true,
+  modalAnimation: 'fade',
+  visible: true,
 };
+
+interface CustomizationState {
+  selectedCategory: string;
+  selectedComponent: string;
+  selectedFramework: Framework;
+  showCodeView: boolean;
+  codeViewOpen: boolean;
+  activeState: ComponentState;
+  previewBackground: PreviewBackground;
+  componentConfig: ComponentConfig;
+  
+  setSelectedCategory: (category: string) => void;
+  setSelectedComponent: (component: string) => void;
+  setSelectedFramework: (framework: Framework) => void;
+  toggleCodeView: () => void;
+  setCodeViewOpen: (open: boolean) => void;
+  setActiveState: (state: ComponentState) => void;
+  setPreviewBackground: (bg: PreviewBackground) => void;
+  updateComponentConfig: (updates: Partial<ComponentConfig>) => void;
+  updateStateStyles: (state: keyof ComponentConfig['stateStyles'], updates: Partial<StateStyles>) => void;
+  resetComponentConfig: () => void;
+}
 
 export const useCustomizationStore = create<CustomizationState>((set) => ({
   selectedCategory: 'Buttons',
   selectedComponent: 'Standard Button',
   selectedFramework: 'react',
   showCodeView: false,
+  codeViewOpen: false,
+  activeState: 'default',
+  previewBackground: 'light',
   componentConfig: defaultComponentConfig,
+  
   setSelectedCategory: (category) => set({ selectedCategory: category }),
-  setSelectedComponent: (component) => set({ selectedComponent: component }),
+  setSelectedComponent: (component) => set({ 
+    selectedComponent: component,
+    componentConfig: defaultComponentConfig, // Reset config when switching components
+  }),
   setSelectedFramework: (framework) => set({ selectedFramework: framework }),
   toggleCodeView: () => set((state) => ({ showCodeView: !state.showCodeView })),
+  setCodeViewOpen: (open) => set({ codeViewOpen: open }),
+  setActiveState: (state) => set({ activeState: state }),
+  setPreviewBackground: (bg) => set({ previewBackground: bg }),
   updateComponentConfig: (updates) =>
     set((state) => ({
       componentConfig: { ...state.componentConfig, ...updates },
+    })),
+  updateStateStyles: (stateName, updates) =>
+    set((state) => ({
+      componentConfig: {
+        ...state.componentConfig,
+        stateStyles: {
+          ...state.componentConfig.stateStyles,
+          [stateName]: { ...state.componentConfig.stateStyles[stateName], ...updates },
+        },
+      },
     })),
   resetComponentConfig: () => set({ componentConfig: defaultComponentConfig }),
 }));
