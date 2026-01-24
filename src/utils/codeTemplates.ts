@@ -1,20 +1,40 @@
 import { ComponentConfig } from '@/store/useCustomizationStore';
 
+// Helper to compute box shadow string
+const getBoxShadow = (config: ComponentConfig): string => {
+  const inset = config.boxShadowInset ? 'inset ' : '';
+  return `${inset}${config.boxShadowX}px ${config.boxShadowY}px ${config.boxShadowBlur}px ${config.boxShadowSpread}px ${config.boxShadowColor}`;
+};
+
+// Helper to compute background
+const getBackground = (config: ComponentConfig): string => {
+  if (config.useGradient) {
+    return config.gradientType === 'linear'
+      ? `linear-gradient(${config.gradientAngle}deg, ${config.gradientStart}, ${config.gradientEnd})`
+      : `radial-gradient(circle, ${config.gradientStart}, ${config.gradientEnd})`;
+  }
+  return config.backgroundColor;
+};
+
+// Helper to get border radius
+const getBorderRadius = (config: ComponentConfig): string => {
+  if (config.linkBorderRadius) {
+    return `${config.borderRadius}px`;
+  }
+  return `${config.borderTopLeftRadius}px ${config.borderTopRightRadius}px ${config.borderBottomRightRadius}px ${config.borderBottomLeftRadius}px`;
+};
+
 export const generateReactCode = (config: ComponentConfig): string => {
-  const iconImports = [];
-  if (config.prefixIcon) iconImports.push(config.prefixIcon);
-  if (config.suffixIcon) iconImports.push(config.suffixIcon);
+  const hasIcon = config.buttonIcon && config.buttonIcon.length > 0;
+  const iconImport = hasIcon ? `import { ${config.buttonIcon} } from 'lucide-react';\n` : '';
+  
+  const boxShadow = getBoxShadow(config);
+  const background = getBackground(config);
+  const borderRadius = getBorderRadius(config);
 
-  const iconImportStatement =
-    iconImports.length > 0
-      ? `import { ${iconImports.join(', ')} } from 'lucide-react';\n`
-      : '';
-
-  return `${iconImportStatement}
-const CustomComponent = () => {
+  return `${iconImport}const CustomButton = () => {
   return (
     <button
-      className="transition-all"
       style={{
         fontFamily: '${config.fontFamily}',
         fontSize: '${config.fontSize}px',
@@ -25,116 +45,93 @@ const CustomComponent = () => {
         textAlign: '${config.textAlign}',
         textDecoration: '${config.textDecoration}',
         textTransform: '${config.textTransform}',
-        backgroundColor: '${config.backgroundColor}',
+        background: '${background}',
         color: '${config.textColor}',
         border: '${config.borderWidth}px ${config.borderStyle} ${config.borderColor}',
-        borderRadius: '${config.borderRadius}px',
+        borderRadius: '${borderRadius}',
         padding: '${config.paddingTop}px ${config.paddingRight}px ${config.paddingBottom}px ${config.paddingLeft}px',
         margin: '${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px',
-        width: '${config.width}',
+        width: '${config.buttonFullWidth ? '100%' : config.width}',
         height: '${config.height}',
-        minWidth: '${config.minWidth}',
-        maxWidth: '${config.maxWidth}',
-        minHeight: '${config.minHeight}',
-        maxHeight: '${config.maxHeight}',
-        boxShadow: '${config.boxShadow}',
-        textShadow: '${config.textShadow}',
+        boxShadow: '${boxShadow}',
         opacity: ${config.opacity},
-        cursor: ${config.disabledState ? "'not-allowed'" : "'pointer'"},
+        cursor: 'pointer',
         display: '${config.display}',
-        position: '${config.position}',
-        top: '${config.top}',
-        left: '${config.left}',
-        right: '${config.right}',
-        bottom: '${config.bottom}',
-        zIndex: ${config.zIndex},
-        flexDirection: '${config.flexDirection}',
-        justifyContent: '${config.justifyContent}',
-        alignItems: '${config.alignItems}',
         gap: '${config.gap}px',
-        transition: '${config.transitionProperty} ${config.transitionDuration}ms ${config.transitionTimingFunction} ${config.transitionDelay}ms',
-        backgroundImage: '${config.gradient || config.backgroundImage}',
-        backgroundPosition: '${config.backgroundPosition}',
-        backgroundRepeat: '${config.backgroundRepeat}',
-        backgroundSize: '${config.backgroundSize}',
-        backgroundAttachment: '${config.backgroundAttachment}',
+        transition: 'all ${config.transitionDuration}ms ${config.transitionEasing}',
       }}
-      ${config.disabledState ? 'disabled' : ''}
+      className="inline-flex items-center justify-center"
     >
-      ${config.prefixIcon ? `<${config.prefixIcon} size={20} />` : ''}
-      {${JSON.stringify(config.text)}}
-      ${config.suffixIcon ? `<${config.suffixIcon} size={20} />` : ''}
+      ${hasIcon && config.buttonIconPosition === 'left' ? `<${config.buttonIcon} size={${config.fontSize}} className="mr-2" />` : ''}
+      ${config.text}
+      ${hasIcon && config.buttonIconPosition === 'right' ? `<${config.buttonIcon} size={${config.fontSize}} className="ml-2" />` : ''}
     </button>
   );
 };
 
-export default CustomComponent;`;
+export default CustomButton;`;
 };
 
 export const generateAngularCode = (config: ComponentConfig): string => {
-  return `<!-- custom-component.component.html -->
+  const boxShadow = getBoxShadow(config);
+  const background = getBackground(config);
+  const borderRadius = getBorderRadius(config);
+
+  return `<!-- component.html -->
 <button
-  class="custom-button"
-  [disabled]="${config.disabledState}"
   [ngStyle]="{
     'font-family': '${config.fontFamily}',
     'font-size': '${config.fontSize}px',
-    'font-weight': ${config.fontWeight},
+    'font-weight': '${config.fontWeight}',
     'font-style': '${config.fontStyle}',
-    'line-height': ${config.lineHeight},
+    'line-height': '${config.lineHeight}',
     'letter-spacing': '${config.letterSpacing}px',
     'text-align': '${config.textAlign}',
     'text-decoration': '${config.textDecoration}',
     'text-transform': '${config.textTransform}',
-    'background-color': '${config.backgroundColor}',
+    'background': '${background}',
     'color': '${config.textColor}',
     'border': '${config.borderWidth}px ${config.borderStyle} ${config.borderColor}',
-    'border-radius': '${config.borderRadius}px',
+    'border-radius': '${borderRadius}',
     'padding': '${config.paddingTop}px ${config.paddingRight}px ${config.paddingBottom}px ${config.paddingLeft}px',
     'margin': '${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px',
-    'width': '${config.width}',
+    'width': '${config.buttonFullWidth ? '100%' : config.width}',
     'height': '${config.height}',
-    'box-shadow': '${config.boxShadow}',
-    'opacity': ${config.opacity},
-    'cursor': ${config.disabledState ? "'not-allowed'" : "'pointer'"},
+    'box-shadow': '${boxShadow}',
+    'opacity': '${config.opacity}',
+    'cursor': 'pointer',
     'display': '${config.display}',
-    'position': '${config.position}',
-    'z-index': ${config.zIndex}
+    'gap': '${config.gap}px',
+    'transition': 'all ${config.transitionDuration}ms ${config.transitionEasing}'
   }"
 >
-  ${config.prefixIcon ? `<mat-icon>${config.prefixIcon.toLowerCase()}</mat-icon>` : ''}
+  ${config.buttonIcon && config.buttonIconPosition === 'left' ? `<mat-icon>${config.buttonIcon}</mat-icon>` : ''}
   ${config.text}
-  ${config.suffixIcon ? `<mat-icon>${config.suffixIcon.toLowerCase()}</mat-icon>` : ''}
+  ${config.buttonIcon && config.buttonIconPosition === 'right' ? `<mat-icon>${config.buttonIcon}</mat-icon>` : ''}
 </button>
 
-<!-- custom-component.component.ts -->
+<!-- component.ts -->
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-custom-component',
-  templateUrl: './custom-component.component.html',
-  styleUrls: ['./custom-component.component.css']
+  selector: 'app-custom-button',
+  templateUrl: './component.html',
 })
-export class CustomComponentComponent {}`;
+export class CustomButtonComponent {}`;
 };
 
 export const generateStreamlitCode = (config: ComponentConfig): string => {
+  const boxShadow = getBoxShadow(config);
+  const background = getBackground(config);
+  const borderRadius = getBorderRadius(config);
+
   return `import streamlit as st
 
-# Custom component with Streamlit
-if st.button(
-    "${config.text}",
-    key="custom_button",
-    help="Custom styled button",
-    disabled=${config.disabledState}
-):
-    st.write("Button clicked!")
-
-# Add custom CSS styling
+# Custom CSS for the button
 st.markdown("""
 <style>
-.stButton > button {
-    font-family: ${config.fontFamily};
+.custom-button {
+    font-family: '${config.fontFamily}';
     font-size: ${config.fontSize}px;
     font-weight: ${config.fontWeight};
     font-style: ${config.fontStyle};
@@ -143,120 +140,126 @@ st.markdown("""
     text-align: ${config.textAlign};
     text-decoration: ${config.textDecoration};
     text-transform: ${config.textTransform};
-    background-color: ${config.backgroundColor};
+    background: ${background};
     color: ${config.textColor};
     border: ${config.borderWidth}px ${config.borderStyle} ${config.borderColor};
-    border-radius: ${config.borderRadius}px;
+    border-radius: ${borderRadius};
     padding: ${config.paddingTop}px ${config.paddingRight}px ${config.paddingBottom}px ${config.paddingLeft}px;
-    width: ${config.width};
+    margin: ${config.marginTop}px ${config.marginRight}px ${config.marginBottom}px ${config.marginLeft}px;
+    width: ${config.buttonFullWidth ? '100%' : config.width};
     height: ${config.height};
-    box-shadow: ${config.boxShadow};
-    cursor: ${config.disabledState ? 'not-allowed' : 'pointer'};
+    box-shadow: ${boxShadow};
     opacity: ${config.opacity};
-    transition: all ${config.transitionDuration}ms ${config.transitionTimingFunction};
+    cursor: pointer;
+    transition: all ${config.transitionDuration}ms ${config.transitionEasing};
 }
 
-.stButton > button:hover {
-    ${config.hoverEffect ? `transform: translateY(-2px);` : ''}
+.custom-button:hover {
+    background: ${config.stateStyles.hover.backgroundColor || background};
+    color: ${config.stateStyles.hover.textColor || config.textColor};
 }
 </style>
-""", unsafe_allow_html=True)`;
+""", unsafe_allow_html=True)
+
+# Button
+if st.button("${config.text}", key="custom_button"):
+    st.write("Button clicked!")`;
 };
 
 export const generateTkinterCode = (config: ComponentConfig): string => {
+  // Convert hex to RGB for Tkinter
+  const hexToRgb = (hex: string) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? `#${result[1]}${result[2]}${result[3]}` : hex;
+  };
+
   return `import tkinter as tk
 from tkinter import ttk
 
-class CustomComponent:
+class CustomButton:
     def __init__(self, parent):
         self.button = tk.Button(
             parent,
             text="${config.text}",
-            font=("${config.fontFamily}", ${config.fontSize}, "${config.fontWeight >= 600 ? 'bold' : 'normal'}"),
-            bg="${config.backgroundColor}",
-            fg="${config.textColor}",
-            activebackground="${config.backgroundColor}",
-            activeforeground="${config.textColor}",
-            relief=tk.FLAT,
+            font=("${config.fontFamily}", ${Math.round(config.fontSize * 0.75)}),
+            bg="${hexToRgb(config.backgroundColor)}",
+            fg="${hexToRgb(config.textColor)}",
+            activebackground="${hexToRgb(config.stateStyles.active.backgroundColor || config.backgroundColor)}",
+            activeforeground="${hexToRgb(config.stateStyles.active.textColor || config.textColor)}",
+            relief="flat",
             borderwidth=${config.borderWidth},
-            highlightthickness=0,
-            cursor="${config.disabledState ? 'arrow' : 'hand2'}",
-            state="${config.disabledState ? 'disabled' : 'normal'}",
             padx=${config.paddingLeft},
             pady=${config.paddingTop},
-            command=self.on_click
+            cursor="hand2"
         )
         
-        ${config.hoverEffect ? `self.button.bind('<Enter>', self.on_hover)
-        self.button.bind('<Leave>', self.on_leave)` : ''}
+        # Hover effect
+        self.button.bind("<Enter>", self.on_enter)
+        self.button.bind("<Leave>", self.on_leave)
     
-    def on_click(self):
-        print("Button clicked!")
+    def on_enter(self, e):
+        self.button.config(bg="${hexToRgb(config.stateStyles.hover.backgroundColor || config.backgroundColor)}")
     
-    ${config.hoverEffect ? `def on_hover(self, event):
-        self.button.config(bg="${lightenColor(config.backgroundColor)}")
-    
-    def on_leave(self, event):
-        self.button.config(bg="${config.backgroundColor}")` : ''}
+    def on_leave(self, e):
+        self.button.config(bg="${hexToRgb(config.backgroundColor)}")
 
 # Usage
 root = tk.Tk()
-root.title("Custom Component")
-custom_btn = CustomComponent(root)
-custom_btn.button.pack(padx=20, pady=20)
+root.title("Custom Button")
+btn = CustomButton(root)
+btn.button.pack(padx=20, pady=20)
 root.mainloop()`;
 };
 
 export const generateWinUI3Code = (config: ComponentConfig): string => {
-  return `<!-- CustomComponent.xaml -->
+  return `<!-- XAML -->
 <Button
-    x:Name="CustomButton"
     Content="${config.text}"
-    Width="${config.width}"
-    Height="${config.height}"
-    IsEnabled="${!config.disabledState}"
-    CornerRadius="${config.borderRadius}"
-    Padding="${config.paddingLeft},${config.paddingTop},${config.paddingRight},${config.paddingBottom}"
     FontFamily="${config.fontFamily}"
     FontSize="${config.fontSize}"
-    FontWeight="${config.fontWeight >= 600 ? 'Bold' : 'Normal'}"
-    Background="${config.backgroundColor}"
+    FontWeight="${config.fontWeight === 700 ? 'Bold' : config.fontWeight === 500 ? 'Medium' : 'Normal'}"
+    FontStyle="${config.fontStyle === 'italic' ? 'Italic' : 'Normal'}"
     Foreground="${config.textColor}"
+    Background="${config.backgroundColor}"
     BorderBrush="${config.borderColor}"
-    BorderThickness="${config.borderWidth}">
-    
+    BorderThickness="${config.borderWidth}"
+    CornerRadius="${config.borderRadius}"
+    Padding="${config.paddingLeft},${config.paddingTop},${config.paddingRight},${config.paddingBottom}"
+    Margin="${config.marginLeft},${config.marginTop},${config.marginRight},${config.marginBottom}"
+    Width="${config.buttonFullWidth ? 'Auto' : config.width}"
+    Height="${config.height}"
+    Opacity="${config.opacity}"
+    HorizontalAlignment="Center"
+    VerticalAlignment="Center">
     <Button.Resources>
         <Style TargetType="Button">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Grid>
-                            <Border
-                                x:Name="RootBorder"
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <Storyboard>
+                                            <ColorAnimation 
+                                                Storyboard.TargetName="ButtonBackground"
+                                                Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                To="${config.stateStyles.hover.backgroundColor || config.backgroundColor}"
+                                                Duration="0:0:0.${config.transitionDuration}"/>
+                                        </Storyboard>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Border x:Name="ButtonBackground"
                                 Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="{TemplateBinding CornerRadius}"
-                                Padding="{TemplateBinding Padding}">
-                                
+                                CornerRadius="${config.borderRadius}">
                                 <ContentPresenter
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"/>
-                                
-                                <Border.Shadow>
-                                    <ThemeShadow />
-                                </Border.Shadow>
                             </Border>
-                            
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    ${config.hoverEffect ? `<VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootBorder.Translation" Value="0,-2,8"/>
-                                        </VisualState.Setters>
-                                    </VisualState>` : ''}
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -264,8 +267,4 @@ export const generateWinUI3Code = (config: ComponentConfig): string => {
         </Style>
     </Button.Resources>
 </Button>`;
-};
-
-const lightenColor = (color: string): string => {
-  return color;
 };
