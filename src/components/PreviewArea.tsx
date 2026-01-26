@@ -1,12 +1,178 @@
 import { useCustomizationStore, PreviewBackground } from '@/store/useCustomizationStore';
 import { StandardButton } from './StandardButton';
-import { PreviewInput } from './preview/PreviewInput';
-import { PreviewCard } from './preview/PreviewCard';
 import { cn } from '@/lib/utils';
 import { Monitor, Tablet, Smartphone, Sun, Moon, Grid3X3 } from 'lucide-react';
 import { useState } from 'react';
 
+// Button Previews
+import { IconButton } from './preview/buttons/IconButton';
+import { FABButton } from './preview/buttons/FABButton';
+import { OutlineButton } from './preview/buttons/OutlineButton';
+import { ToggleButton } from './preview/buttons/ToggleButton';
+
+// Text Previews
+import { HeadingPreview } from './preview/text/HeadingPreview';
+import { ParagraphPreview } from './preview/text/ParagraphPreview';
+import { LabelPreview } from './preview/text/LabelPreview';
+import { BlockquotePreview } from './preview/text/BlockquotePreview';
+import { CodeBlockPreview } from './preview/text/CodeBlockPreview';
+
+// Input Previews
+import {
+  TextFieldPreview,
+  TextAreaPreview,
+  PasswordInputPreview,
+  SearchFieldPreview,
+  NumberInputPreview,
+  FileUploadPreview,
+  RangeSliderPreview,
+  ColorPickerPreview,
+} from './preview/inputs/InputPreviews';
+
+// Selector Previews
+import {
+  CheckboxPreview,
+  RadioGroupPreview,
+  SwitchPreview,
+  DropdownPreview,
+  AutocompletePreview,
+} from './preview/selectors/SelectorPreviews';
+
+// Navigation Previews
+import {
+  NavbarPreview,
+  TabsPreview,
+  BreadcrumbsPreview,
+  PaginationPreview,
+  StepperPreview,
+} from './preview/navigation/NavigationPreviews';
+
+// Card Previews
+import {
+  BasicCardPreview,
+  ImageCardPreview,
+  ProfileCardPreview,
+  AccordionPreview,
+} from './preview/cards/CardPreviews';
+
+// Feedback Previews
+import {
+  AlertPreview,
+  ToastPreview,
+  BadgePreview,
+  ProgressPreview,
+  SkeletonPreview,
+  TooltipPreview,
+  ModalPreview,
+} from './preview/feedback/FeedbackPreviews';
+
+// List Previews
+import {
+  SimpleListPreview,
+  IconListPreview,
+  CheckboxListPreview,
+  OrderedListPreview,
+} from './preview/lists/ListPreviews';
+
+// Data Display Previews
+import {
+  TablePreview,
+  GridPreview,
+  TimelinePreview,
+  CarouselPreview,
+  ImagePreview,
+  AvatarPreview,
+  IconPreview,
+} from './preview/data/DataPreviews';
+
+// Advanced Previews
+import {
+  DragDropPreview,
+  SplitPanePreview,
+  CodeEditorPreview,
+  ChartPreview,
+} from './preview/advanced/AdvancedPreviews';
+
 type DeviceFrame = 'desktop' | 'tablet' | 'mobile';
+
+// Map component names to their preview components
+const componentMap: Record<string, React.FC> = {
+  // Buttons
+  'Standard Button': StandardButton,
+  'Icon Button': IconButton,
+  'FAB Button': FABButton,
+  'Outline Button': OutlineButton,
+  'Toggle Button': ToggleButton,
+  
+  // Text & Typography
+  'Heading': HeadingPreview,
+  'Paragraph': ParagraphPreview,
+  'Label': LabelPreview,
+  'Blockquote': BlockquotePreview,
+  'Code Block': CodeBlockPreview,
+  
+  // Forms & Inputs
+  'Text Field': TextFieldPreview,
+  'Text Area': TextAreaPreview,
+  'Password Input': PasswordInputPreview,
+  'Search Field': SearchFieldPreview,
+  'Number Input': NumberInputPreview,
+  'File Upload': FileUploadPreview,
+  'Range Slider': RangeSliderPreview,
+  'Color Picker': ColorPickerPreview,
+  
+  // Selectors
+  'Checkbox': CheckboxPreview,
+  'Radio Group': RadioGroupPreview,
+  'Switch': SwitchPreview,
+  'Dropdown': DropdownPreview,
+  'Autocomplete': AutocompletePreview,
+  
+  // Navigation
+  'Nav Bar': NavbarPreview,
+  'Tabs': TabsPreview,
+  'Breadcrumbs': BreadcrumbsPreview,
+  'Pagination': PaginationPreview,
+  'Stepper': StepperPreview,
+  
+  // Cards & Containers
+  'Basic Card': BasicCardPreview,
+  'Image Card': ImageCardPreview,
+  'Profile Card': ProfileCardPreview,
+  'Accordion': AccordionPreview,
+  
+  // Feedback & Indicators
+  'Alert': AlertPreview,
+  'Toast': ToastPreview,
+  'Badge': BadgePreview,
+  'Progress Bar': ProgressPreview,
+  'Skeleton': SkeletonPreview,
+  'Tooltip': TooltipPreview,
+  'Modal': ModalPreview,
+  
+  // Lists
+  'Simple List': SimpleListPreview,
+  'Icon List': IconListPreview,
+  'Checkbox List': CheckboxListPreview,
+  'Ordered List': OrderedListPreview,
+  
+  // Data Display
+  'Table': TablePreview,
+  'Grid': GridPreview,
+  'Timeline': TimelinePreview,
+  'Carousel': CarouselPreview,
+  
+  // Media & Visuals
+  'Image': ImagePreview,
+  'Avatar': AvatarPreview,
+  'Icon': IconPreview,
+  'Chart': ChartPreview,
+  
+  // Interactive & Advanced
+  'Drag & Drop': DragDropPreview,
+  'Split Pane': SplitPanePreview,
+  'Code Editor': CodeEditorPreview,
+};
 
 export const PreviewArea = () => {
   const { selectedComponent, previewBackground, setPreviewBackground, activeState } = useCustomizationStore();
@@ -25,16 +191,10 @@ export const PreviewArea = () => {
   };
 
   const renderComponent = () => {
-    const componentType = selectedComponent.toLowerCase();
-
-    if (componentType.includes('button')) {
-      return <StandardButton />;
-    }
-    if (componentType.includes('input') || componentType.includes('text field')) {
-      return <PreviewInput />;
-    }
-    if (componentType.includes('card')) {
-      return <PreviewCard />;
+    const PreviewComponent = componentMap[selectedComponent];
+    
+    if (PreviewComponent) {
+      return <PreviewComponent />;
     }
 
     return (
