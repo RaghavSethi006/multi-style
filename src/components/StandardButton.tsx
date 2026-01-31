@@ -1,9 +1,11 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import * as icons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
+import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const StandardButton = () => {
   const { componentConfig } = useCustomizationStore();
+  const { isEditing, editValue, setEditValue, inputRef, startEditing, stopEditing, handleKeyDown } = useInlineEdit('text');
 
   const IconComponent = componentConfig.buttonIcon 
     ? icons[componentConfig.buttonIcon as keyof typeof icons] as LucideIcon 
@@ -33,6 +35,14 @@ export const StandardButton = () => {
         border: `1px solid rgba(255, 255, 255, 0.2)`,
       }
     : {};
+
+  const textStyles: React.CSSProperties = {
+    fontFamily: componentConfig.fontFamily,
+    fontSize: `${componentConfig.fontSize}px`,
+    fontWeight: componentConfig.fontWeight,
+    color: componentConfig.textColor,
+    cursor: 'text',
+  };
 
   return (
     <button
@@ -119,7 +129,22 @@ export const StandardButton = () => {
           )}
         </>
       )}
-      <span>{componentConfig.text}</span>
+      {isEditing ? (
+        <input
+          ref={inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={stopEditing}
+          onKeyDown={handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          style={getInlineEditStyles(textStyles)}
+        />
+      ) : (
+        <span onClick={(e) => { e.stopPropagation(); startEditing(); }} title="Click to edit">
+          {componentConfig.text}
+        </span>
+      )}
       {!componentConfig.buttonLoading && IconComponent && componentConfig.buttonIconPosition === 'right' && (
         <IconComponent size={componentConfig.fontSize} style={{ marginLeft: '8px' }} />
       )}

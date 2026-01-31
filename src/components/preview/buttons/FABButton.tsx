@@ -1,9 +1,11 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import * as icons from 'lucide-react';
 import { LucideIcon } from 'lucide-react';
+import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const FABButton = () => {
   const { componentConfig, activeState } = useCustomizationStore();
+  const { isEditing, editValue, setEditValue, inputRef, startEditing, stopEditing, handleKeyDown } = useInlineEdit('text');
 
   const IconComponent = componentConfig.buttonIcon 
     ? icons[componentConfig.buttonIcon as keyof typeof icons] as LucideIcon 
@@ -23,16 +25,11 @@ export const FABButton = () => {
 
   const getPositionStyles = (): React.CSSProperties => {
     switch (componentConfig.fabPosition) {
-      case 'bottom-right':
-        return { bottom: '24px', right: '24px' };
-      case 'bottom-left':
-        return { bottom: '24px', left: '24px' };
-      case 'top-right':
-        return { top: '24px', right: '24px' };
-      case 'top-left':
-        return { top: '24px', left: '24px' };
-      default:
-        return { bottom: '24px', right: '24px' };
+      case 'bottom-right': return { bottom: '24px', right: '24px' };
+      case 'bottom-left': return { bottom: '24px', left: '24px' };
+      case 'top-right': return { top: '24px', right: '24px' };
+      case 'top-left': return { top: '24px', left: '24px' };
+      default: return { bottom: '24px', right: '24px' };
     }
   };
 
@@ -63,6 +60,13 @@ export const FABButton = () => {
     ...getStateStyles(),
   };
 
+  const textStyles: React.CSSProperties = {
+    fontFamily: componentConfig.fontFamily,
+    fontSize: `${componentConfig.fontSize}px`,
+    color: 'inherit',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
@@ -71,7 +75,22 @@ export const FABButton = () => {
       <button style={buttonStyles}>
         {IconComponent && <IconComponent size={componentConfig.fontSize * 1.5} />}
         {componentConfig.fabExtended && componentConfig.text && (
-          <span>{componentConfig.text}</span>
+          isEditing ? (
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={stopEditing}
+              onKeyDown={handleKeyDown}
+              onClick={(e) => e.stopPropagation()}
+              style={getInlineEditStyles(textStyles)}
+            />
+          ) : (
+            <span onClick={(e) => { e.stopPropagation(); startEditing(); }} title="Click to edit">
+              {componentConfig.text}
+            </span>
+          )
         )}
       </button>
     </div>
