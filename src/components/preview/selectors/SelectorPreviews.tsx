@@ -1,12 +1,14 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import { Check, Minus, ChevronDown, Search } from 'lucide-react';
 import { useState } from 'react';
+import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const CheckboxPreview = () => {
   const { componentConfig, updateComponentConfig, activeState } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
 
   const handleClick = () => {
-    if (activeState !== 'disabled') {
+    if (activeState !== 'disabled' && !labelEdit.isEditing) {
       if (componentConfig.checkboxIndeterminate) {
         updateComponentConfig({ checkboxIndeterminate: false, checkboxChecked: true });
       } else {
@@ -33,6 +35,14 @@ export const CheckboxPreview = () => {
     cursor: activeState === 'disabled' ? 'not-allowed' : 'pointer',
     opacity: activeState === 'disabled' ? 0.5 : 1,
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+    flexShrink: 0,
+  };
+
+  const labelStyles: React.CSSProperties = {
+    fontFamily: componentConfig.fontFamily,
+    fontSize: `${componentConfig.fontSize}px`,
+    color: activeState === 'disabled' ? '#9CA3AF' : '#374151',
+    cursor: 'text',
   };
 
   if (!componentConfig.visible) return null;
@@ -48,19 +58,33 @@ export const CheckboxPreview = () => {
           <Minus size={14} color="#FFFFFF" strokeWidth={3} />
         )}
       </div>
-      <span style={{ 
-        fontFamily: componentConfig.fontFamily,
-        fontSize: `${componentConfig.fontSize}px`,
-        color: activeState === 'disabled' ? '#9CA3AF' : '#374151',
-      }}>
-        {componentConfig.label}
-      </span>
+      {labelEdit.isEditing ? (
+        <input
+          ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={labelEdit.editValue}
+          onChange={(e) => labelEdit.setEditValue(e.target.value)}
+          onBlur={labelEdit.stopEditing}
+          onKeyDown={labelEdit.handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          style={getInlineEditStyles(labelStyles)}
+        />
+      ) : (
+        <span 
+          style={labelStyles}
+          onClick={(e) => { e.stopPropagation(); labelEdit.startEditing(); }}
+          title="Click to edit"
+        >
+          {componentConfig.label}
+        </span>
+      )}
     </div>
   );
 };
 
 export const RadioGroupPreview = () => {
   const { componentConfig, updateComponentConfig, activeState } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
 
   const handleSelect = (index: number) => {
     if (activeState !== 'disabled') {
@@ -68,18 +92,33 @@ export const RadioGroupPreview = () => {
     }
   };
 
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.875}px`, 
+    fontWeight: 500, 
+    color: '#374151',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {componentConfig.label && (
-        <label style={{ 
-          fontSize: `${componentConfig.fontSize * 0.875}px`, 
-          fontWeight: 500, 
-          color: '#374151' 
-        }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       {componentConfig.radioOptions.map((option, index) => (
         <div
@@ -122,9 +161,10 @@ export const RadioGroupPreview = () => {
 
 export const SwitchPreview = () => {
   const { componentConfig, updateComponentConfig, activeState } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
 
   const handleToggle = () => {
-    if (activeState !== 'disabled') {
+    if (activeState !== 'disabled' && !labelEdit.isEditing) {
       updateComponentConfig({ switchChecked: !componentConfig.switchChecked });
     }
   };
@@ -146,6 +186,7 @@ export const SwitchPreview = () => {
     cursor: activeState === 'disabled' ? 'not-allowed' : 'pointer',
     opacity: activeState === 'disabled' ? 0.5 : 1,
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+    flexShrink: 0,
   };
 
   const thumbStyles: React.CSSProperties = {
@@ -159,6 +200,12 @@ export const SwitchPreview = () => {
     borderRadius: '50%',
     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+  };
+
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize}px`,
+    color: activeState === 'disabled' ? '#9CA3AF' : '#374151',
+    cursor: 'text',
   };
 
   if (!componentConfig.visible) return null;
@@ -175,12 +222,26 @@ export const SwitchPreview = () => {
       <div style={trackStyles} onClick={handleToggle}>
         <div style={thumbStyles} />
       </div>
-      <span style={{ 
-        fontSize: `${componentConfig.fontSize}px`,
-        color: activeState === 'disabled' ? '#9CA3AF' : '#374151',
-      }}>
-        {componentConfig.label}
-      </span>
+      {labelEdit.isEditing ? (
+        <input
+          ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={labelEdit.editValue}
+          onChange={(e) => labelEdit.setEditValue(e.target.value)}
+          onBlur={labelEdit.stopEditing}
+          onKeyDown={labelEdit.handleKeyDown}
+          onClick={(e) => e.stopPropagation()}
+          style={getInlineEditStyles(labelStyles)}
+        />
+      ) : (
+        <span 
+          style={labelStyles}
+          onClick={(e) => { e.stopPropagation(); labelEdit.startEditing(); }}
+          title="Click to edit"
+        >
+          {componentConfig.label}
+        </span>
+      )}
     </div>
   );
 };
@@ -188,6 +249,7 @@ export const SwitchPreview = () => {
 export const DropdownPreview = () => {
   const { componentConfig, updateComponentConfig, activeState } = useCustomizationStore();
   const [isOpen, setIsOpen] = useState(false);
+  const labelEdit = useInlineEdit('label');
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
@@ -212,20 +274,35 @@ export const DropdownPreview = () => {
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
   };
 
+  const labelStyles: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '8px',
+    fontSize: `${componentConfig.fontSize * 0.875}px`, 
+    fontWeight: 500, 
+    color: '#374151',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div style={{ position: 'relative', width: '280px' }}>
       {componentConfig.label && (
-        <label style={{ 
-          display: 'block',
-          marginBottom: '8px',
-          fontSize: `${componentConfig.fontSize * 0.875}px`, 
-          fontWeight: 500, 
-          color: '#374151' 
-        }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       <div 
         style={triggerStyles}
@@ -289,6 +366,7 @@ export const AutocompletePreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const labelEdit = useInlineEdit('label');
 
   const filteredOptions = componentConfig.dropdownOptions.filter(option =>
     option.toLowerCase().includes(query.toLowerCase())
@@ -313,20 +391,35 @@ export const AutocompletePreview = () => {
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
   };
 
+  const labelStyles: React.CSSProperties = {
+    display: 'block',
+    marginBottom: '8px',
+    fontSize: `${componentConfig.fontSize * 0.875}px`, 
+    fontWeight: 500, 
+    color: '#374151',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div style={{ position: 'relative', width: '280px' }}>
       {componentConfig.label && (
-        <label style={{ 
-          display: 'block',
-          marginBottom: '8px',
-          fontSize: `${componentConfig.fontSize * 0.875}px`, 
-          fontWeight: 500, 
-          color: '#374151' 
-        }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       <div style={{ position: 'relative' }}>
         <Search 

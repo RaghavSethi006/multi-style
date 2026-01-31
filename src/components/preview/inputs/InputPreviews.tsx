@@ -1,9 +1,12 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import { Search, X, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
+import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const TextFieldPreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
+  const helperEdit = useInlineEdit('inputHelperText');
 
   const getStateStyles = () => {
     if (activeState === 'default') return {};
@@ -50,22 +53,45 @@ export const TextFieldPreview = () => {
     ...getStateStyles(),
   };
 
+  const labelStyles: React.CSSProperties = {
+    fontFamily: componentConfig.fontFamily,
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: componentConfig.textColor === '#FFFFFF' ? '#374151' : componentConfig.textColor,
+    cursor: 'text',
+  };
+
+  const helperStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.75}px`,
+    color: componentConfig.inputValidationState === 'error' ? '#EF4444' 
+         : componentConfig.inputValidationState === 'success' ? '#22C55E' 
+         : '#6B7280',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div className="flex flex-col gap-2" style={{ width: componentConfig.width === 'auto' ? '280px' : componentConfig.width }}>
       {componentConfig.label && (
-        <label 
-          style={{ 
-            fontFamily: componentConfig.fontFamily,
-            fontSize: `${componentConfig.fontSize * 0.875}px`,
-            fontWeight: 500,
-            color: componentConfig.textColor === '#FFFFFF' ? '#374151' : componentConfig.textColor,
-          }}
-        >
-          {componentConfig.label}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {labelEdit.isEditing ? (
+            <input
+              ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={labelEdit.editValue}
+              onChange={(e) => labelEdit.setEditValue(e.target.value)}
+              onBlur={labelEdit.stopEditing}
+              onKeyDown={labelEdit.handleKeyDown}
+              style={getInlineEditStyles(labelStyles)}
+            />
+          ) : (
+            <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+              {componentConfig.label}
+            </label>
+          )}
           {componentConfig.inputRequired && <span style={{ color: '#EF4444', marginLeft: '4px' }}>*</span>}
-        </label>
+        </div>
       )}
       <input
         type={componentConfig.inputType}
@@ -74,14 +100,21 @@ export const TextFieldPreview = () => {
         disabled={activeState === 'disabled'}
       />
       {componentConfig.inputHelperText && (
-        <span style={{ 
-          fontSize: `${componentConfig.fontSize * 0.75}px`,
-          color: componentConfig.inputValidationState === 'error' ? '#EF4444' 
-               : componentConfig.inputValidationState === 'success' ? '#22C55E' 
-               : '#6B7280'
-        }}>
-          {componentConfig.inputHelperText}
-        </span>
+        helperEdit.isEditing ? (
+          <input
+            ref={helperEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={helperEdit.editValue}
+            onChange={(e) => helperEdit.setEditValue(e.target.value)}
+            onBlur={helperEdit.stopEditing}
+            onKeyDown={helperEdit.handleKeyDown}
+            style={getInlineEditStyles(helperStyles)}
+          />
+        ) : (
+          <span style={helperStyles} onClick={helperEdit.startEditing} title="Click to edit">
+            {componentConfig.inputHelperText}
+          </span>
+        )
       )}
     </div>
   );
@@ -89,6 +122,7 @@ export const TextFieldPreview = () => {
 
 export const TextAreaPreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
 
   const getValidationBorderColor = () => {
     if (componentConfig.inputValidationState === 'error') return '#EF4444';
@@ -118,20 +152,37 @@ export const TextAreaPreview = () => {
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
   };
 
+  const labelStyles: React.CSSProperties = {
+    fontFamily: componentConfig.fontFamily,
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: componentConfig.textColor === '#FFFFFF' ? '#374151' : componentConfig.textColor,
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div className="flex flex-col gap-2" style={{ width: componentConfig.width === 'auto' ? '320px' : componentConfig.width }}>
       {componentConfig.label && (
-        <label style={{ 
-          fontFamily: componentConfig.fontFamily,
-          fontSize: `${componentConfig.fontSize * 0.875}px`,
-          fontWeight: 500,
-          color: componentConfig.textColor === '#FFFFFF' ? '#374151' : componentConfig.textColor,
-        }}>
-          {componentConfig.label}
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {labelEdit.isEditing ? (
+            <input
+              ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={labelEdit.editValue}
+              onChange={(e) => labelEdit.setEditValue(e.target.value)}
+              onBlur={labelEdit.stopEditing}
+              onKeyDown={labelEdit.handleKeyDown}
+              style={getInlineEditStyles(labelStyles)}
+            />
+          ) : (
+            <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+              {componentConfig.label}
+            </label>
+          )}
           {componentConfig.inputRequired && <span style={{ color: '#EF4444', marginLeft: '4px' }}>*</span>}
-        </label>
+        </div>
       )}
       <textarea
         placeholder={componentConfig.placeholder}
@@ -146,6 +197,7 @@ export const TextAreaPreview = () => {
 export const PasswordInputPreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
   const [showPassword, setShowPassword] = useState(false);
+  const labelEdit = useInlineEdit('label');
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
@@ -166,18 +218,33 @@ export const PasswordInputPreview = () => {
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
   };
 
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: '#374151',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div className="flex flex-col gap-2" style={{ width: '280px' }}>
       {componentConfig.label && (
-        <label style={{ 
-          fontSize: `${componentConfig.fontSize * 0.875}px`,
-          fontWeight: 500,
-          color: '#374151',
-        }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       <div style={{ position: 'relative' }}>
         <input
@@ -276,6 +343,7 @@ export const SearchFieldPreview = () => {
 export const NumberInputPreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
   const [value, setValue] = useState(0);
+  const labelEdit = useInlineEdit('label');
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
@@ -310,14 +378,33 @@ export const NumberInputPreview = () => {
     fontWeight: 600,
   };
 
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: '#374151',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div className="flex flex-col gap-2" style={{ width: '160px' }}>
       {componentConfig.label && (
-        <label style={{ fontSize: `${componentConfig.fontSize * 0.875}px`, fontWeight: 500, color: '#374151' }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       <div style={{ display: 'flex', borderRadius, overflow: 'hidden' }}>
         <button 
@@ -349,6 +436,7 @@ export const NumberInputPreview = () => {
 export const FileUploadPreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
   const [isDragging, setIsDragging] = useState(false);
+  const labelEdit = useInlineEdit('label');
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
@@ -370,14 +458,33 @@ export const FileUploadPreview = () => {
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
   };
 
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: '#374151',
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div className="flex flex-col gap-2" style={{ width: '320px' }}>
       {componentConfig.label && (
-        <label style={{ fontSize: `${componentConfig.fontSize * 0.875}px`, fontWeight: 500, color: '#374151' }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       <div
         style={containerStyles}
@@ -417,9 +524,17 @@ export const FileUploadPreview = () => {
 
 export const RangeSliderPreview = () => {
   const { componentConfig, updateComponentConfig, activeState } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateComponentConfig({ sliderValue: Number(e.target.value) });
+  };
+
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: '#374151',
+    cursor: 'text',
   };
 
   if (!componentConfig.visible) return null;
@@ -428,9 +543,21 @@ export const RangeSliderPreview = () => {
     <div className="flex flex-col gap-3" style={{ width: '280px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         {componentConfig.label && (
-          <label style={{ fontSize: `${componentConfig.fontSize * 0.875}px`, fontWeight: 500, color: '#374151' }}>
-            {componentConfig.label}
-          </label>
+          labelEdit.isEditing ? (
+            <input
+              ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={labelEdit.editValue}
+              onChange={(e) => labelEdit.setEditValue(e.target.value)}
+              onBlur={labelEdit.stopEditing}
+              onKeyDown={labelEdit.handleKeyDown}
+              style={getInlineEditStyles(labelStyles)}
+            />
+          ) : (
+            <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+              {componentConfig.label}
+            </label>
+          )
         )}
         {componentConfig.sliderShowValue && (
           <span style={{ fontSize: '14px', fontWeight: 600, color: '#3B82F6' }}>
@@ -462,15 +589,35 @@ export const RangeSliderPreview = () => {
 
 export const ColorPickerPreview = () => {
   const { componentConfig, updateComponentConfig } = useCustomizationStore();
+  const labelEdit = useInlineEdit('label');
+
+  const labelStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize * 0.875}px`,
+    fontWeight: 500,
+    color: '#374151',
+    cursor: 'text',
+  };
 
   if (!componentConfig.visible) return null;
 
   return (
     <div className="flex flex-col gap-2">
       {componentConfig.label && (
-        <label style={{ fontSize: `${componentConfig.fontSize * 0.875}px`, fontWeight: 500, color: '#374151' }}>
-          {componentConfig.label}
-        </label>
+        labelEdit.isEditing ? (
+          <input
+            ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={labelEdit.editValue}
+            onChange={(e) => labelEdit.setEditValue(e.target.value)}
+            onBlur={labelEdit.stopEditing}
+            onKeyDown={labelEdit.handleKeyDown}
+            style={getInlineEditStyles(labelStyles)}
+          />
+        ) : (
+          <label style={labelStyles} onClick={labelEdit.startEditing} title="Click to edit">
+            {componentConfig.label}
+          </label>
+        )
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <input

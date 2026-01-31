@@ -1,10 +1,13 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import { Info, CheckCircle, AlertTriangle, XCircle, X } from 'lucide-react';
 import { useState } from 'react';
+import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const AlertPreview = () => {
   const { componentConfig } = useCustomizationStore();
   const [dismissed, setDismissed] = useState(false);
+  const titleEdit = useInlineEdit('alertTitle');
+  const messageEdit = useInlineEdit('alertMessage');
 
   const getAlertStyles = () => {
     switch (componentConfig.alertType) {
@@ -21,6 +24,21 @@ export const AlertPreview = () => {
 
   const alertStyle = getAlertStyles();
   const Icon = alertStyle.icon;
+
+  const titleStyles: React.CSSProperties = {
+    margin: '0 0 4px',
+    fontSize: '15px',
+    fontWeight: 600,
+    color: '#111827',
+    cursor: 'text',
+  };
+
+  const messageStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: '14px',
+    color: '#374151',
+    cursor: 'text',
+  };
 
   if (!componentConfig.visible || dismissed) return null;
 
@@ -40,13 +58,37 @@ export const AlertPreview = () => {
       )}
       <div style={{ flex: 1 }}>
         {componentConfig.alertTitle && (
-          <h4 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 600, color: '#111827' }}>
-            {componentConfig.alertTitle}
-          </h4>
+          titleEdit.isEditing ? (
+            <input
+              ref={titleEdit.inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={titleEdit.editValue}
+              onChange={(e) => titleEdit.setEditValue(e.target.value)}
+              onBlur={titleEdit.stopEditing}
+              onKeyDown={titleEdit.handleKeyDown}
+              style={getInlineEditStyles(titleStyles)}
+            />
+          ) : (
+            <h4 style={titleStyles} onClick={titleEdit.startEditing} title="Click to edit">
+              {componentConfig.alertTitle}
+            </h4>
+          )
         )}
-        <p style={{ margin: 0, fontSize: '14px', color: '#374151' }}>
-          {componentConfig.alertMessage}
-        </p>
+        {messageEdit.isEditing ? (
+          <input
+            ref={messageEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={messageEdit.editValue}
+            onChange={(e) => messageEdit.setEditValue(e.target.value)}
+            onBlur={messageEdit.stopEditing}
+            onKeyDown={messageEdit.handleKeyDown}
+            style={getInlineEditStyles(messageStyles)}
+          />
+        ) : (
+          <p style={messageStyles} onClick={messageEdit.startEditing} title="Click to edit">
+            {componentConfig.alertMessage}
+          </p>
+        )}
       </div>
       {componentConfig.alertDismissible && (
         <button
@@ -68,6 +110,7 @@ export const AlertPreview = () => {
 
 export const ToastPreview = () => {
   const { componentConfig } = useCustomizationStore();
+  const textEdit = useInlineEdit('text');
 
   const getPositionStyles = (): React.CSSProperties => {
     const positions: Record<string, React.CSSProperties> = {
@@ -96,6 +139,13 @@ export const ToastPreview = () => {
 
   const toastStyle = getToastStyles();
   const Icon = toastStyle.icon;
+
+  const textStyles: React.CSSProperties = {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#FFFFFF',
+    cursor: 'text',
+  };
 
   if (!componentConfig.visible) return null;
 
@@ -130,7 +180,21 @@ export const ToastPreview = () => {
         color: '#FFFFFF',
       }}>
         <Icon size={18} />
-        <span style={{ fontSize: '14px', fontWeight: 500 }}>{componentConfig.text}</span>
+        {textEdit.isEditing ? (
+          <input
+            ref={textEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={textEdit.editValue}
+            onChange={(e) => textEdit.setEditValue(e.target.value)}
+            onBlur={textEdit.stopEditing}
+            onKeyDown={textEdit.handleKeyDown}
+            style={getInlineEditStyles(textStyles)}
+          />
+        ) : (
+          <span style={textStyles} onClick={textEdit.startEditing} title="Click to edit">
+            {componentConfig.text}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -138,6 +202,7 @@ export const ToastPreview = () => {
 
 export const BadgePreview = () => {
   const { componentConfig } = useCustomizationStore();
+  const badgeEdit = useInlineEdit('badgeContent');
 
   const getBadgeStyles = () => {
     switch (componentConfig.badgeVariant) {
@@ -154,6 +219,13 @@ export const BadgePreview = () => {
 
   const badgeStyle = getBadgeStyles();
 
+  const textStyles: React.CSSProperties = {
+    fontSize: `${componentConfig.fontSize}px`,
+    fontWeight: 500,
+    color: badgeStyle.color,
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
@@ -168,7 +240,21 @@ export const BadgePreview = () => {
       fontSize: `${componentConfig.fontSize}px`,
       fontWeight: 500,
     }}>
-      {componentConfig.badgeContent}
+      {badgeEdit.isEditing ? (
+        <input
+          ref={badgeEdit.inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={badgeEdit.editValue}
+          onChange={(e) => badgeEdit.setEditValue(e.target.value)}
+          onBlur={badgeEdit.stopEditing}
+          onKeyDown={badgeEdit.handleKeyDown}
+          style={getInlineEditStyles(textStyles)}
+        />
+      ) : (
+        <span onClick={badgeEdit.startEditing} title="Click to edit" style={{ cursor: 'text' }}>
+          {componentConfig.badgeContent}
+        </span>
+      )}
     </span>
   );
 };
@@ -277,6 +363,8 @@ export const SkeletonPreview = () => {
 export const TooltipPreview = () => {
   const { componentConfig } = useCustomizationStore();
   const [showTooltip, setShowTooltip] = useState(false);
+  const textEdit = useInlineEdit('text');
+  const tooltipEdit = useInlineEdit('tooltipContent');
 
   const getTooltipPosition = (): React.CSSProperties => {
     switch (componentConfig.tooltipPosition) {
@@ -289,6 +377,19 @@ export const TooltipPreview = () => {
       default:
         return { bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px' };
     }
+  };
+
+  const buttonTextStyles: React.CSSProperties = {
+    fontSize: '14px',
+    fontWeight: 500,
+    color: '#FFFFFF',
+    cursor: 'text',
+  };
+
+  const tooltipTextStyles: React.CSSProperties = {
+    fontSize: '13px',
+    color: '#FFFFFF',
+    cursor: 'text',
   };
 
   if (!componentConfig.visible) return null;
@@ -310,7 +411,22 @@ export const TooltipPreview = () => {
         fontWeight: 500,
         cursor: 'pointer',
       }}>
-        {componentConfig.text}
+        {textEdit.isEditing ? (
+          <input
+            ref={textEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={textEdit.editValue}
+            onChange={(e) => textEdit.setEditValue(e.target.value)}
+            onBlur={textEdit.stopEditing}
+            onKeyDown={textEdit.handleKeyDown}
+            onClick={(e) => e.stopPropagation()}
+            style={getInlineEditStyles(buttonTextStyles)}
+          />
+        ) : (
+          <span onClick={(e) => { e.stopPropagation(); textEdit.startEditing(); }} title="Click to edit">
+            {componentConfig.text}
+          </span>
+        )}
       </button>
       {showTooltip && (
         <div style={{
@@ -325,7 +441,21 @@ export const TooltipPreview = () => {
           zIndex: 50,
           boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
         }}>
-          {componentConfig.tooltipContent}
+          {tooltipEdit.isEditing ? (
+            <input
+              ref={tooltipEdit.inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={tooltipEdit.editValue}
+              onChange={(e) => tooltipEdit.setEditValue(e.target.value)}
+              onBlur={tooltipEdit.stopEditing}
+              onKeyDown={tooltipEdit.handleKeyDown}
+              style={getInlineEditStyles(tooltipTextStyles)}
+            />
+          ) : (
+            <span onClick={tooltipEdit.startEditing} title="Click to edit" style={{ cursor: 'text' }}>
+              {componentConfig.tooltipContent}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -335,6 +465,8 @@ export const TooltipPreview = () => {
 export const ModalPreview = () => {
   const { componentConfig } = useCustomizationStore();
   const [isOpen, setIsOpen] = useState(false);
+  const titleEdit = useInlineEdit('modalTitle');
+  const textEdit = useInlineEdit('text');
 
   const getSizeStyles = () => {
     switch (componentConfig.modalSize) {
@@ -343,6 +475,22 @@ export const ModalPreview = () => {
       case 'full': return { maxWidth: '90vw', width: '100%' };
       default: return { maxWidth: '480px' };
     }
+  };
+
+  const titleStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: '18px',
+    fontWeight: 600,
+    color: '#111827',
+    cursor: 'text',
+  };
+
+  const textStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: '14px',
+    color: '#374151',
+    lineHeight: 1.6,
+    cursor: 'text',
   };
 
   if (!componentConfig.visible) return null;
@@ -395,9 +543,21 @@ export const ModalPreview = () => {
               padding: '16px 20px',
               borderBottom: '1px solid #E5E7EB',
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: '#111827' }}>
-                {componentConfig.modalTitle}
-              </h3>
+              {titleEdit.isEditing ? (
+                <input
+                  ref={titleEdit.inputRef as React.RefObject<HTMLInputElement>}
+                  type="text"
+                  value={titleEdit.editValue}
+                  onChange={(e) => titleEdit.setEditValue(e.target.value)}
+                  onBlur={titleEdit.stopEditing}
+                  onKeyDown={titleEdit.handleKeyDown}
+                  style={getInlineEditStyles(titleStyles)}
+                />
+              ) : (
+                <h3 style={titleStyles} onClick={titleEdit.startEditing} title="Click to edit">
+                  {componentConfig.modalTitle}
+                </h3>
+              )}
               {componentConfig.modalShowClose && (
                 <button
                   onClick={() => setIsOpen(false)}
@@ -414,9 +574,21 @@ export const ModalPreview = () => {
               )}
             </div>
             <div style={{ padding: '20px' }}>
-              <p style={{ margin: 0, fontSize: '14px', color: '#374151', lineHeight: 1.6 }}>
-                {componentConfig.text}
-              </p>
+              {textEdit.isEditing ? (
+                <input
+                  ref={textEdit.inputRef as React.RefObject<HTMLInputElement>}
+                  type="text"
+                  value={textEdit.editValue}
+                  onChange={(e) => textEdit.setEditValue(e.target.value)}
+                  onBlur={textEdit.stopEditing}
+                  onKeyDown={textEdit.handleKeyDown}
+                  style={getInlineEditStyles(textStyles)}
+                />
+              ) : (
+                <p style={textStyles} onClick={textEdit.startEditing} title="Click to edit">
+                  {componentConfig.text}
+                </p>
+              )}
             </div>
             <div style={{
               display: 'flex',

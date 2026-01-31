@@ -1,9 +1,13 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import { ChevronDown, User } from 'lucide-react';
 import { useState } from 'react';
+import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const BasicCardPreview = () => {
   const { componentConfig, activeState } = useCustomizationStore();
+  const titleEdit = useInlineEdit('cardTitle');
+  const subtitleEdit = useInlineEdit('cardSubtitle');
+  const textEdit = useInlineEdit('text');
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
@@ -23,43 +27,85 @@ export const BasicCardPreview = () => {
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
   };
 
+  const titleStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: '18px',
+    fontWeight: 600,
+    color: componentConfig.textColor === '#FFFFFF' ? '#111827' : componentConfig.textColor,
+    cursor: 'text',
+  };
+
+  const subtitleStyles: React.CSSProperties = {
+    margin: '4px 0 0',
+    fontSize: '14px',
+    color: '#6B7280',
+    cursor: 'text',
+  };
+
+  const textStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: `${componentConfig.fontSize}px`,
+    color: componentConfig.textColor === '#FFFFFF' ? '#374151' : componentConfig.textColor,
+    lineHeight: 1.6,
+    cursor: 'text',
+  };
+
   if (!componentConfig.visible) return null;
 
   return (
     <div style={cardStyles}>
       {componentConfig.cardShowHeader && (
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: `1px solid ${componentConfig.borderColor}`,
-        }}>
-          <h3 style={{
-            margin: 0,
-            fontSize: '18px',
-            fontWeight: 600,
-            color: componentConfig.textColor === '#FFFFFF' ? '#111827' : componentConfig.textColor,
-          }}>
-            {componentConfig.cardTitle}
-          </h3>
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${componentConfig.borderColor}` }}>
+          {titleEdit.isEditing ? (
+            <input
+              ref={titleEdit.inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={titleEdit.editValue}
+              onChange={(e) => titleEdit.setEditValue(e.target.value)}
+              onBlur={titleEdit.stopEditing}
+              onKeyDown={titleEdit.handleKeyDown}
+              style={getInlineEditStyles(titleStyles)}
+            />
+          ) : (
+            <h3 style={titleStyles} onClick={titleEdit.startEditing} title="Click to edit">
+              {componentConfig.cardTitle}
+            </h3>
+          )}
           {componentConfig.cardSubtitle && (
-            <p style={{
-              margin: '4px 0 0',
-              fontSize: '14px',
-              color: '#6B7280',
-            }}>
-              {componentConfig.cardSubtitle}
-            </p>
+            subtitleEdit.isEditing ? (
+              <input
+                ref={subtitleEdit.inputRef as React.RefObject<HTMLInputElement>}
+                type="text"
+                value={subtitleEdit.editValue}
+                onChange={(e) => subtitleEdit.setEditValue(e.target.value)}
+                onBlur={subtitleEdit.stopEditing}
+                onKeyDown={subtitleEdit.handleKeyDown}
+                style={getInlineEditStyles(subtitleStyles)}
+              />
+            ) : (
+              <p style={subtitleStyles} onClick={subtitleEdit.startEditing} title="Click to edit">
+                {componentConfig.cardSubtitle}
+              </p>
+            )
           )}
         </div>
       )}
       <div style={{ padding: '20px' }}>
-        <p style={{
-          margin: 0,
-          fontSize: `${componentConfig.fontSize}px`,
-          color: componentConfig.textColor === '#FFFFFF' ? '#374151' : componentConfig.textColor,
-          lineHeight: 1.6,
-        }}>
-          {componentConfig.text}
-        </p>
+        {textEdit.isEditing ? (
+          <input
+            ref={textEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={textEdit.editValue}
+            onChange={(e) => textEdit.setEditValue(e.target.value)}
+            onBlur={textEdit.stopEditing}
+            onKeyDown={textEdit.handleKeyDown}
+            style={getInlineEditStyles(textStyles)}
+          />
+        ) : (
+          <p style={textStyles} onClick={textEdit.startEditing} title="Click to edit">
+            {componentConfig.text}
+          </p>
+        )}
       </div>
       {componentConfig.cardShowFooter && (
         <div style={{
@@ -100,12 +146,29 @@ export const BasicCardPreview = () => {
 
 export const ImageCardPreview = () => {
   const { componentConfig } = useCustomizationStore();
+  const titleEdit = useInlineEdit('cardTitle');
+  const subtitleEdit = useInlineEdit('cardSubtitle');
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
     : `${componentConfig.borderTopLeftRadius}px ${componentConfig.borderTopRightRadius}px ${componentConfig.borderBottomRightRadius}px ${componentConfig.borderBottomLeftRadius}px`;
 
   const boxShadow = `${componentConfig.boxShadowX}px ${componentConfig.boxShadowY}px ${componentConfig.boxShadowBlur}px ${componentConfig.boxShadowSpread}px ${componentConfig.boxShadowColor}`;
+
+  const titleStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: '18px',
+    fontWeight: 600,
+    color: '#111827',
+    cursor: 'text',
+  };
+
+  const subtitleStyles: React.CSSProperties = {
+    margin: '8px 0 0',
+    fontSize: '14px',
+    color: '#6B7280',
+    cursor: 'text',
+  };
 
   if (!componentConfig.visible) return null;
 
@@ -125,21 +188,36 @@ export const ImageCardPreview = () => {
         backgroundPosition: 'center',
       }} />
       <div style={{ padding: '20px' }}>
-        <h3 style={{
-          margin: 0,
-          fontSize: '18px',
-          fontWeight: 600,
-          color: '#111827',
-        }}>
-          {componentConfig.cardTitle}
-        </h3>
-        <p style={{
-          margin: '8px 0 0',
-          fontSize: '14px',
-          color: '#6B7280',
-        }}>
-          {componentConfig.cardSubtitle}
-        </p>
+        {titleEdit.isEditing ? (
+          <input
+            ref={titleEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={titleEdit.editValue}
+            onChange={(e) => titleEdit.setEditValue(e.target.value)}
+            onBlur={titleEdit.stopEditing}
+            onKeyDown={titleEdit.handleKeyDown}
+            style={getInlineEditStyles(titleStyles)}
+          />
+        ) : (
+          <h3 style={titleStyles} onClick={titleEdit.startEditing} title="Click to edit">
+            {componentConfig.cardTitle}
+          </h3>
+        )}
+        {subtitleEdit.isEditing ? (
+          <input
+            ref={subtitleEdit.inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={subtitleEdit.editValue}
+            onChange={(e) => subtitleEdit.setEditValue(e.target.value)}
+            onBlur={subtitleEdit.stopEditing}
+            onKeyDown={subtitleEdit.handleKeyDown}
+            style={getInlineEditStyles(subtitleStyles)}
+          />
+        ) : (
+          <p style={subtitleStyles} onClick={subtitleEdit.startEditing} title="Click to edit">
+            {componentConfig.cardSubtitle}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -147,9 +225,26 @@ export const ImageCardPreview = () => {
 
 export const ProfileCardPreview = () => {
   const { componentConfig } = useCustomizationStore();
+  const nameEdit = useInlineEdit('profileName');
+  const roleEdit = useInlineEdit('profileRole');
 
   const borderRadius = `${componentConfig.borderRadius}px`;
   const boxShadow = `${componentConfig.boxShadowX}px ${componentConfig.boxShadowY}px ${componentConfig.boxShadowBlur}px ${componentConfig.boxShadowSpread}px ${componentConfig.boxShadowColor}`;
+
+  const nameStyles: React.CSSProperties = {
+    margin: 0,
+    fontSize: '20px',
+    fontWeight: 600,
+    color: '#111827',
+    cursor: 'text',
+  };
+
+  const roleStyles: React.CSSProperties = {
+    margin: '4px 0 0',
+    fontSize: '14px',
+    color: '#6B7280',
+    cursor: 'text',
+  };
 
   if (!componentConfig.visible) return null;
 
@@ -183,21 +278,36 @@ export const ProfileCardPreview = () => {
           <User size={40} style={{ color: '#3B82F6' }} />
         )}
       </div>
-      <h3 style={{
-        margin: 0,
-        fontSize: '20px',
-        fontWeight: 600,
-        color: '#111827',
-      }}>
-        {componentConfig.profileName}
-      </h3>
-      <p style={{
-        margin: '4px 0 0',
-        fontSize: '14px',
-        color: '#6B7280',
-      }}>
-        {componentConfig.profileRole}
-      </p>
+      {nameEdit.isEditing ? (
+        <input
+          ref={nameEdit.inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={nameEdit.editValue}
+          onChange={(e) => nameEdit.setEditValue(e.target.value)}
+          onBlur={nameEdit.stopEditing}
+          onKeyDown={nameEdit.handleKeyDown}
+          style={getInlineEditStyles(nameStyles)}
+        />
+      ) : (
+        <h3 style={nameStyles} onClick={nameEdit.startEditing} title="Click to edit">
+          {componentConfig.profileName}
+        </h3>
+      )}
+      {roleEdit.isEditing ? (
+        <input
+          ref={roleEdit.inputRef as React.RefObject<HTMLInputElement>}
+          type="text"
+          value={roleEdit.editValue}
+          onChange={(e) => roleEdit.setEditValue(e.target.value)}
+          onBlur={roleEdit.stopEditing}
+          onKeyDown={roleEdit.handleKeyDown}
+          style={getInlineEditStyles(roleStyles)}
+        />
+      ) : (
+        <p style={roleStyles} onClick={roleEdit.startEditing} title="Click to edit">
+          {componentConfig.profileRole}
+        </p>
+      )}
       <div style={{
         display: 'flex',
         gap: '8px',
