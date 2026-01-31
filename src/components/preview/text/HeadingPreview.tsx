@@ -1,7 +1,22 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { useState, useRef, useEffect } from 'react';
 
 export const HeadingPreview = () => {
-  const { componentConfig, activeState } = useCustomizationStore();
+  const { componentConfig, activeState, updateComponentConfig } = useCustomizationStore();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(componentConfig.text);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setEditValue(componentConfig.text);
+  }, [componentConfig.text]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
 
   const getStateStyles = () => {
     if (activeState === 'default') return {};
@@ -34,15 +49,64 @@ export const HeadingPreview = () => {
     margin: 0,
     opacity: componentConfig.opacity,
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+    cursor: 'text',
     ...getStateStyles(),
+  };
+
+  const handleClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (editValue !== componentConfig.text) {
+      updateComponentConfig({ text: editValue });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleBlur();
+    }
+    if (e.key === 'Escape') {
+      setEditValue(componentConfig.text);
+      setIsEditing(false);
+    }
   };
 
   if (!componentConfig.visible) return null;
 
   const HeadingTag = `h${componentConfig.headingLevel}` as keyof JSX.IntrinsicElements;
 
+  if (isEditing) {
+    return (
+      <input
+        ref={inputRef}
+        type="text"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        style={{
+          ...headingStyles,
+          border: '2px solid hsl(var(--primary))',
+          borderRadius: '4px',
+          padding: '4px 8px',
+          background: 'transparent',
+          outline: 'none',
+          width: '100%',
+          minWidth: '200px',
+        }}
+      />
+    );
+  }
+
   return (
-    <HeadingTag style={headingStyles}>
+    <HeadingTag 
+      style={headingStyles} 
+      onClick={handleClick}
+      title="Click to edit"
+    >
       {componentConfig.text}
     </HeadingTag>
   );

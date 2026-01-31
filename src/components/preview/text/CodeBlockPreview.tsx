@@ -1,10 +1,23 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export const CodeBlockPreview = () => {
-  const { componentConfig } = useCustomizationStore();
+  const { componentConfig, updateComponentConfig } = useCustomizationStore();
   const [copied, setCopied] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(componentConfig.codeContent);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setEditValue(componentConfig.codeContent);
+  }, [componentConfig.codeContent]);
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
 
   const borderRadius = componentConfig.linkBorderRadius
     ? `${componentConfig.borderRadius}px`
@@ -29,6 +42,20 @@ export const CodeBlockPreview = () => {
     navigator.clipboard.writeText(componentConfig.codeContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    if (editValue !== componentConfig.codeContent) {
+      updateComponentConfig({ codeContent: editValue });
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      setEditValue(componentConfig.codeContent);
+      setIsEditing(false);
+    }
   };
 
   if (!componentConfig.visible) return null;
@@ -73,9 +100,35 @@ export const CodeBlockPreview = () => {
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <pre style={{ ...codeBlockStyles, margin: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-        <code>{componentConfig.codeContent}</code>
-      </pre>
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          rows={8}
+          style={{
+            ...codeBlockStyles,
+            margin: 0,
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            border: '2px solid hsl(var(--primary))',
+            outline: 'none',
+            resize: 'vertical',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+        />
+      ) : (
+        <pre 
+          style={{ ...codeBlockStyles, margin: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, cursor: 'text' }}
+          onClick={() => setIsEditing(true)}
+          title="Click to edit code"
+        >
+          <code>{componentConfig.codeContent}</code>
+        </pre>
+      )}
     </div>
   );
 };
