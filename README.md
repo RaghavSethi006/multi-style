@@ -1,73 +1,196 @@
-# Welcome to your Lovable project
+# multi-style
 
-## Project info
+**A visual UI component customization playground built with React, TypeScript, and shadcn/ui.**
 
-**URL**: https://lovable.dev/projects/6292d293-4a7c-41c5-a8dd-983655b473bc
+Browse, customize, and export production-ready component code — live, in the browser, with zero setup.
 
-## How can I edit this code?
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white&style=flat-square)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white&style=flat-square)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?logo=tailwindcss&logoColor=white&style=flat-square)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white&style=flat-square)](https://vitejs.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## What is multi-style?
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6292d293-4a7c-41c5-a8dd-983655b473bc) and start prompting.
+multi-style is an interactive design tool for developers and designers who want to customize UI components visually and get clean, copy-paste-ready code instantly.
 
-Changes made via Lovable will be committed automatically to this repo.
+Pick a component from the catalog, tweak typography, colors, sizing, effects, and states through a dedicated panel, and watch the live preview update in real time. When you're happy, copy the generated code directly into your project.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Features
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **30+ components** across buttons, inputs, cards, navigation, feedback, lists, selectors, data display, and text
+- **6 customization panels** — Appearance, Typography, Size & Layout, Effects, States, and Component-specific options
+- **Live code generation** — outputs clean, ready-to-use JSX with Tailwind classes
+- **One-click copy** — export the component code directly to your clipboard
+- **Component catalog** — browse all components with interactive mini-previews
+- **Template system** — save and restore named customization presets
+- **Responsive layout** — works across desktop and tablet viewports
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Getting started
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Prerequisites
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Node.js 18+ or Bun 1.0+
+- npm, yarn, pnpm, or Bun
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-username/multi-style.git
+cd multi-style
+
+# Install dependencies (pick one)
+npm install
+# or
+bun install
 ```
 
-**Edit a file directly in GitHub**
+### Development
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run dev
+# or
+bun dev
+```
 
-**Use GitHub Codespaces**
+Open [http://localhost:8080](http://localhost:8080) in your browser.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Build for production
 
-## What technologies are used for this project?
+```bash
+npm run build
+# or
+bun run build
+```
 
-This project is built with:
+The output goes to `dist/`. Preview the production build with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+npm run preview
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/6292d293-4a7c-41c5-a8dd-983655b473bc) and click on Share -> Publish.
+## Project structure
 
-## Can I connect a custom domain to my Lovable project?
+```
+multi-style/
+├── src/
+│   ├── components/
+│   │   ├── catalog/          # Component browser (grid + mini-previews)
+│   │   ├── customization/    # 6 customization panel components
+│   │   ├── preview/          # Full live preview components by category
+│   │   │   ├── buttons/
+│   │   │   ├── cards/
+│   │   │   ├── inputs/
+│   │   │   ├── text/
+│   │   │   └── ...
+│   │   └── ui/               # shadcn/ui base components
+│   ├── data/
+│   │   └── categories.ts     # Component catalog registry
+│   ├── hooks/                # Custom React hooks
+│   ├── pages/                # Route-level page components
+│   ├── store/
+│   │   ├── useCustomizationStore.ts   # Active component + style state (Zustand)
+│   │   └── useTemplateStore.ts        # Saved template presets (Zustand)
+│   └── utils/
+│       ├── codeTemplates.ts  # Code generation logic
+│       └── download.ts       # Export utilities
+├── public/
+├── index.html
+├── tailwind.config.ts
+└── vite.config.ts
+```
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Tech stack
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+| Layer | Technology |
+|---|---|
+| Framework | React 18 + TypeScript |
+| Build tool | Vite |
+| Styling | Tailwind CSS |
+| Component library | shadcn/ui + Radix UI |
+| State management | Zustand |
+| Routing | React Router |
+| Icons | Lucide React |
+| Package manager | Bun / npm |
+
+---
+
+## Component catalog
+
+| Category | Components |
+|---|---|
+| Buttons | Standard, Icon, FAB, Outline, Toggle |
+| Inputs | Text input, Textarea, Search, OTP |
+| Cards | Default, Image, Stats, Profile |
+| Navigation | Tabs, Breadcrumb, Pagination, Navbar |
+| Feedback | Alert, Badge, Toast, Progress, Skeleton |
+| Selectors | Checkbox, Radio, Switch, Select, Slider |
+| Lists | Default, Ordered, Description |
+| Data | Table, Avatar group, Chart |
+| Text | Heading, Paragraph, Label, Blockquote, Code block |
+| Advanced | Accordion, Dialog, Drawer, Dropdown, Tooltip |
+
+---
+
+## Contributing
+
+Contributions are welcome! Here's how to get involved:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/your-feature-name`
+3. Make your changes and commit: `git commit -m 'feat: add your feature'`
+4. Push to your branch: `git push origin feat/your-feature-name`
+5. Open a Pull Request
+
+### Adding a new component
+
+1. Add the component entry to `src/data/categories.ts`
+2. Create a preview file under the relevant `src/components/preview/` subfolder
+3. Add a mini-preview case in `src/components/catalog/MiniPreview.tsx`
+4. Wire up any component-specific customization options in `src/components/customization/ComponentSpecificPanel.tsx`
+
+### Code style
+
+- Follow the existing TypeScript patterns
+- Use Tailwind utility classes for all styling
+- Keep components focused — one responsibility per file
+- Run `npm run lint` before submitting a PR
+
+---
+
+## Roadmap
+
+- [ ] URL-encoded shareable links for customization state
+- [ ] Export as CSS variables / design tokens
+- [ ] Undo/redo history
+- [ ] Responsive preview (mobile/tablet/desktop switcher)
+- [ ] Community template gallery
+- [ ] Dark mode preview toggle
+- [ ] Accessibility score overlay (contrast ratio, WCAG checks)
+
+---
+
+## License
+
+This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file for details.
+
+---
+
+## Acknowledgements
+
+Built with [shadcn/ui](https://ui.shadcn.com), [Radix UI](https://www.radix-ui.com), [Tailwind CSS](https://tailwindcss.com), and [Vite](https://vitejs.dev).
+
+---
+
+*Made with care by [Raghav](https://github.com/your-username)*
