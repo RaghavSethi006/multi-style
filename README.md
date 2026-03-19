@@ -1,8 +1,8 @@
 # multi-style
 
-**A visual UI component customization playground built with React, TypeScript, and shadcn/ui.**
+**Customize UI components visually and export production-ready code — in React, Angular, Streamlit, tkinter, or WinUI3.**
 
-Browse, customize, and export production-ready component code — live, in the browser, with zero setup.
+Most component tools lock you into one framework. multi-style doesn't. Design your component once, then export it to whichever stack you're building in — whether that's a React web app, an Angular enterprise frontend, a Python Streamlit dashboard, a tkinter desktop tool, or a Windows-native WinUI3 application.
 
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white&style=flat-square)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white&style=flat-square)](https://www.typescriptlang.org)
@@ -14,21 +14,36 @@ Browse, customize, and export production-ready component code — live, in the b
 
 ## What is multi-style?
 
-multi-style is an interactive design tool for developers and designers who want to customize UI components visually and get clean, copy-paste-ready code instantly.
+multi-style is an open-source component customization playground that spans the full spectrum of UI frameworks — from web to desktop to Python.
 
-Pick a component from the catalog, tweak typography, colors, sizing, effects, and states through a dedicated panel, and watch the live preview update in real time. When you're happy, copy the generated code directly into your project.
+Pick a component, customize it visually through dedicated panels (colors, typography, sizing, effects, states), watch it update live in the preview, then export clean, idiomatic code for the framework of your choice. No boilerplate hunting. No framework-specific docs-diving. Just your component, ready to paste.
+
+---
+
+## Supported export targets
+
+| Framework | Platform | Language |
+|---|---|---|
+| **React** | Web | TypeScript / JSX |
+| **Angular** | Web | TypeScript |
+| **Streamlit** | Web / Data apps | Python |
+| **tkinter** | Desktop (cross-platform) | Python |
+| **WinUI3** | Windows native | C# / XAML |
+
+This is what makes multi-style different from every other component playground. Storybook, Radix Themes, shadcn — they all export to one target. multi-style generates correct, idiomatic output for each framework from the same visual customization state.
 
 ---
 
 ## Features
 
 - **30+ components** across buttons, inputs, cards, navigation, feedback, lists, selectors, data display, and text
+- **5 export targets** — React, Angular, Streamlit, tkinter, and WinUI3
 - **6 customization panels** — Appearance, Typography, Size & Layout, Effects, States, and Component-specific options
-- **Live code generation** — outputs clean, ready-to-use JSX with Tailwind classes
-- **One-click copy** — export the component code directly to your clipboard
+- **Live preview** — every change reflects instantly, no reload needed
+- **Idiomatic code generation** — the output for each framework looks hand-written, not machine-generated
+- **One-click copy** — export directly to your clipboard
 - **Component catalog** — browse all components with interactive mini-previews
 - **Template system** — save and restore named customization presets
-- **Responsive layout** — works across desktop and tablet viewports
 
 ---
 
@@ -37,7 +52,6 @@ Pick a component from the catalog, tweak typography, colors, sizing, effects, an
 ### Prerequisites
 
 - Node.js 18+ or Bun 1.0+
-- npm, yarn, pnpm, or Bun
 
 ### Installation
 
@@ -46,7 +60,7 @@ Pick a component from the catalog, tweak typography, colors, sizing, effects, an
 git clone https://github.com/your-username/multi-style.git
 cd multi-style
 
-# Install dependencies (pick one)
+# Install dependencies
 npm install
 # or
 bun install
@@ -66,15 +80,23 @@ Open [http://localhost:8080](http://localhost:8080) in your browser.
 
 ```bash
 npm run build
-# or
-bun run build
 ```
 
-The output goes to `dist/`. Preview the production build with:
+---
 
-```bash
-npm run preview
-```
+## How multi-framework export works
+
+The core challenge of multi-style is translating a single visual state — a set of style properties like `borderRadius: 8`, `fontWeight: 500`, `backgroundColor: #3B82F6` — into idiomatic, correct code for five completely different frameworks and paradigms.
+
+Each framework has its own conventions:
+
+- **React** uses JSX with Tailwind utility classes and component props
+- **Angular** uses component decorators, `[(ngModel)]` bindings, and scoped CSS
+- **Streamlit** uses Python function calls with keyword arguments (`st.button("Click me", type="primary")`)
+- **tkinter** uses object-oriented widget configuration (`ttk.Button(root, text="Click me", style="Custom.TButton")`)
+- **WinUI3** uses XAML markup with C# code-behind (`<Button Style="{StaticResource AccentButtonStyle}">`)
+
+`codeTemplates.ts` handles this translation layer — it takes the unified customization store state and runs it through a per-framework code generator, each of which knows the idioms, property names, and file structure of its target.
 
 ---
 
@@ -86,7 +108,7 @@ multi-style/
 │   ├── components/
 │   │   ├── catalog/          # Component browser (grid + mini-previews)
 │   │   ├── customization/    # 6 customization panel components
-│   │   ├── preview/          # Full live preview components by category
+│   │   ├── preview/          # Live preview components by category
 │   │   │   ├── buttons/
 │   │   │   ├── cards/
 │   │   │   ├── inputs/
@@ -98,31 +120,16 @@ multi-style/
 │   ├── hooks/                # Custom React hooks
 │   ├── pages/                # Route-level page components
 │   ├── store/
-│   │   ├── useCustomizationStore.ts   # Active component + style state (Zustand)
-│   │   └── useTemplateStore.ts        # Saved template presets (Zustand)
+│   │   ├── useCustomizationStore.ts   # Active component + style state
+│   │   └── useTemplateStore.ts        # Saved template presets
 │   └── utils/
-│       ├── codeTemplates.ts  # Code generation logic
-│       └── download.ts       # Export utilities
+│       ├── codeTemplates.ts  # Multi-framework code generation engine
+│       └── download.ts       # Export and download utilities
 ├── public/
 ├── index.html
 ├── tailwind.config.ts
 └── vite.config.ts
 ```
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Framework | React 18 + TypeScript |
-| Build tool | Vite |
-| Styling | Tailwind CSS |
-| Component library | shadcn/ui + Radix UI |
-| State management | Zustand |
-| Routing | React Router |
-| Icons | Lucide React |
-| Package manager | Bun / npm |
 
 ---
 
@@ -143,54 +150,62 @@ multi-style/
 
 ---
 
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | React 18 + TypeScript |
+| Build tool | Vite |
+| Styling | Tailwind CSS |
+| Component library | shadcn/ui + Radix UI |
+| State management | Zustand |
+| Routing | React Router |
+| Icons | Lucide React |
+
+---
+
 ## Contributing
 
-Contributions are welcome! Here's how to get involved:
+Contributions are welcome — especially adding support for new export targets.
 
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/your-feature-name`
-3. Make your changes and commit: `git commit -m 'feat: add your feature'`
-4. Push to your branch: `git push origin feat/your-feature-name`
-5. Open a Pull Request
+3. Commit your changes: `git commit -m 'feat: add your feature'`
+4. Push and open a Pull Request
+
+### Adding a new export framework
+
+1. Add a new generator function in `src/utils/codeTemplates.ts`
+2. Follow the existing per-framework pattern — take the store state as input, return a code string
+3. Add the new framework option to the export UI in `CodeView.tsx`
+4. Test with at least 5 different components across different categories
 
 ### Adding a new component
 
-1. Add the component entry to `src/data/categories.ts`
-2. Create a preview file under the relevant `src/components/preview/` subfolder
+1. Add the entry to `src/data/categories.ts`
+2. Create a preview file under `src/components/preview/`
 3. Add a mini-preview case in `src/components/catalog/MiniPreview.tsx`
-4. Wire up any component-specific customization options in `src/components/customization/ComponentSpecificPanel.tsx`
-
-### Code style
-
-- Follow the existing TypeScript patterns
-- Use Tailwind utility classes for all styling
-- Keep components focused — one responsibility per file
-- Run `npm run lint` before submitting a PR
+4. Add code templates for all 5 export targets in `codeTemplates.ts`
 
 ---
 
 ## Roadmap
 
-- [ ] URL-encoded shareable links for customization state
-- [ ] Export as CSS variables / design tokens
-- [ ] Undo/redo history
-- [ ] Responsive preview (mobile/tablet/desktop switcher)
+- [ ] Vue 3 export support
+- [ ] SwiftUI export support
+- [ ] URL-encoded shareable customization links
+- [ ] Export as design tokens (CSS variables + Tailwind config)
+- [ ] Undo/redo history (Cmd+Z)
+- [ ] Responsive preview switcher (mobile / tablet / desktop)
 - [ ] Community template gallery
-- [ ] Dark mode preview toggle
-- [ ] Accessibility score overlay (contrast ratio, WCAG checks)
+- [ ] Accessibility score overlay (WCAG contrast checks)
 
 ---
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file for details.
+MIT License — see [LICENSE](./LICENSE) for details.
 
 ---
 
-## Acknowledgements
-
-Built with [shadcn/ui](https://ui.shadcn.com), [Radix UI](https://www.radix-ui.com), [Tailwind CSS](https://tailwindcss.com), and [Vite](https://vitejs.dev).
-
----
-
-*Made with care by [Raghav](https://github.com/your-username)*
+*Built by [Raghav Sethi](https://github.com/your-username)*
