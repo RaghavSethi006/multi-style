@@ -1,8 +1,9 @@
-import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { useCustomizationStore, type ComponentConfig } from '@/store/useCustomizationStore';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toColorPickerValue } from '@/lib/styleUtils';
 import { HelpCircle } from 'lucide-react';
 
 export const EffectsPanel = () => {
@@ -16,8 +17,10 @@ export const EffectsPanel = () => {
           <Label className="text-sm font-medium">Box Shadow</Label>
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
-                <HelpCircle size={14} className="text-muted-foreground" />
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="Box shadow help" className="text-muted-foreground">
+                  <HelpCircle size={14} />
+                </button>
               </TooltipTrigger>
               <TooltipContent>Configure shadow effects</TooltipContent>
             </Tooltip>
@@ -26,8 +29,11 @@ export const EffectsPanel = () => {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">X Offset</span>
+            <label htmlFor="shadow-x" className="text-xs text-muted-foreground">
+              X Offset
+            </label>
             <input
+              id="shadow-x"
               type="number"
               value={componentConfig.boxShadowX}
               onChange={(e) => updateComponentConfig({ boxShadowX: Number(e.target.value) })}
@@ -35,8 +41,11 @@ export const EffectsPanel = () => {
             />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Y Offset</span>
+            <label htmlFor="shadow-y" className="text-xs text-muted-foreground">
+              Y Offset
+            </label>
             <input
+              id="shadow-y"
               type="number"
               value={componentConfig.boxShadowY}
               onChange={(e) => updateComponentConfig({ boxShadowY: Number(e.target.value) })}
@@ -44,8 +53,11 @@ export const EffectsPanel = () => {
             />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Blur</span>
+            <label htmlFor="shadow-blur" className="text-xs text-muted-foreground">
+              Blur
+            </label>
             <input
+              id="shadow-blur"
               type="number"
               value={componentConfig.boxShadowBlur}
               onChange={(e) => updateComponentConfig({ boxShadowBlur: Number(e.target.value) })}
@@ -54,8 +66,11 @@ export const EffectsPanel = () => {
             />
           </div>
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Spread</span>
+            <label htmlFor="shadow-spread" className="text-xs text-muted-foreground">
+              Spread
+            </label>
             <input
+              id="shadow-spread"
               type="number"
               value={componentConfig.boxShadowSpread}
               onChange={(e) => updateComponentConfig({ boxShadowSpread: Number(e.target.value) })}
@@ -65,26 +80,33 @@ export const EffectsPanel = () => {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Shadow Color</Label>
+          <Label htmlFor="shadow-color-text" className="text-sm font-medium">
+            Shadow Color
+          </Label>
           <div className="flex gap-2">
             <input
               type="color"
-              value={componentConfig.boxShadowColor.startsWith('rgba') ? '#000000' : componentConfig.boxShadowColor}
+              aria-label="Shadow color picker"
+              value={toColorPickerValue(componentConfig.boxShadowColor, '#000000')}
               onChange={(e) => updateComponentConfig({ boxShadowColor: e.target.value })}
-              className="w-12 h-10 rounded-lg border border-input cursor-pointer"
+              className="w-12 h-10 rounded-lg border border-input cursor-pointer shrink-0"
             />
             <input
+              id="shadow-color-text"
               type="text"
               value={componentConfig.boxShadowColor}
               onChange={(e) => updateComponentConfig({ boxShadowColor: e.target.value })}
-              className="flex-1 px-3 py-2 bg-background border border-input rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+              className="flex-1 min-w-0 px-3 py-2 bg-background border border-input rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
 
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Inset Shadow</Label>
+          <Label htmlFor="shadow-inset" className="text-sm font-medium">
+            Inset Shadow
+          </Label>
           <Switch
+            id="shadow-inset"
             checked={componentConfig.boxShadowInset}
             onCheckedChange={(checked) => updateComponentConfig({ boxShadowInset: checked })}
           />
@@ -95,17 +117,22 @@ export const EffectsPanel = () => {
       <div className="space-y-4 pt-4 border-t border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Label className="text-sm font-medium">Glassmorphism</Label>
+            <Label htmlFor="glass-toggle" className="text-sm font-medium">
+              Glassmorphism
+            </Label>
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
-                  <HelpCircle size={14} className="text-muted-foreground" />
+                <TooltipTrigger asChild>
+                  <button type="button" aria-label="Glassmorphism help" className="text-muted-foreground">
+                    <HelpCircle size={14} />
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent>Apply frosted glass effect</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
           <Switch
+            id="glass-toggle"
             checked={componentConfig.glassmorphism}
             onCheckedChange={(checked) => updateComponentConfig({ glassmorphism: checked })}
           />
@@ -147,8 +174,11 @@ export const EffectsPanel = () => {
       {/* Gradient */}
       <div className="space-y-4 pt-4 border-t border-border">
         <div className="flex items-center justify-between">
-          <Label className="text-sm font-medium">Use Gradient</Label>
+          <Label htmlFor="gradient-toggle" className="text-sm font-medium">
+            Use Gradient
+          </Label>
           <Switch
+            id="gradient-toggle"
             checked={componentConfig.useGradient}
             onCheckedChange={(checked) => updateComponentConfig({ useGradient: checked })}
           />
@@ -157,10 +187,15 @@ export const EffectsPanel = () => {
         {componentConfig.useGradient && (
           <>
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Gradient Type</Label>
+              <Label htmlFor="gradient-type" className="text-sm font-medium">
+                Gradient Type
+              </Label>
               <select
+                id="gradient-type"
                 value={componentConfig.gradientType}
-                onChange={(e) => updateComponentConfig({ gradientType: e.target.value as 'linear' | 'radial' })}
+                onChange={(e) =>
+                  updateComponentConfig({ gradientType: e.target.value as 'linear' | 'radial' })
+                }
                 className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="linear">Linear</option>
@@ -186,36 +221,44 @@ export const EffectsPanel = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Start Color</Label>
+                <Label htmlFor="gradient-start" className="text-sm font-medium">
+                  Start Color
+                </Label>
                 <div className="flex gap-2">
                   <input
                     type="color"
-                    value={componentConfig.gradientStart}
+                    aria-label="Gradient start color picker"
+                    value={toColorPickerValue(componentConfig.gradientStart, '#3B82F6')}
                     onChange={(e) => updateComponentConfig({ gradientStart: e.target.value })}
-                    className="w-10 h-10 rounded-lg border border-input cursor-pointer"
+                    className="w-10 h-10 rounded-lg border border-input cursor-pointer shrink-0"
                   />
                   <input
+                    id="gradient-start"
                     type="text"
                     value={componentConfig.gradientStart}
                     onChange={(e) => updateComponentConfig({ gradientStart: e.target.value })}
-                    className="flex-1 px-2 py-2 bg-background border border-input rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 px-2 py-2 bg-background border border-input rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">End Color</Label>
+                <Label htmlFor="gradient-end" className="text-sm font-medium">
+                  End Color
+                </Label>
                 <div className="flex gap-2">
                   <input
                     type="color"
-                    value={componentConfig.gradientEnd}
+                    aria-label="Gradient end color picker"
+                    value={toColorPickerValue(componentConfig.gradientEnd, '#8B5CF6')}
                     onChange={(e) => updateComponentConfig({ gradientEnd: e.target.value })}
-                    className="w-10 h-10 rounded-lg border border-input cursor-pointer"
+                    className="w-10 h-10 rounded-lg border border-input cursor-pointer shrink-0"
                   />
                   <input
+                    id="gradient-end"
                     type="text"
                     value={componentConfig.gradientEnd}
                     onChange={(e) => updateComponentConfig({ gradientEnd: e.target.value })}
-                    className="flex-1 px-2 py-2 bg-background border border-input rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="flex-1 min-w-0 px-2 py-2 bg-background border border-input rounded-lg text-xs font-mono focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
@@ -243,10 +286,17 @@ export const EffectsPanel = () => {
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Easing</Label>
+          <Label htmlFor="transition-easing" className="text-sm font-medium">
+            Easing
+          </Label>
           <select
+            id="transition-easing"
             value={componentConfig.transitionEasing}
-            onChange={(e) => updateComponentConfig({ transitionEasing: e.target.value as any })}
+            onChange={(e) =>
+              updateComponentConfig({
+                transitionEasing: e.target.value as ComponentConfig['transitionEasing'],
+              })
+            }
             className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="ease">Ease</option>

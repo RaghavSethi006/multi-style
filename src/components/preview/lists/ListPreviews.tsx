@@ -1,7 +1,6 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
-import { Check, Circle } from 'lucide-react';
-import * as icons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { Check } from 'lucide-react';
+import { getLucideIcon } from '@/lib/icons';
 
 export const SimpleListPreview = () => {
   const { componentConfig } = useCustomizationStore();
@@ -42,9 +41,7 @@ export const SimpleListPreview = () => {
 export const IconListPreview = () => {
   const { componentConfig } = useCustomizationStore();
 
-  const IconComponent = componentConfig.listIconName 
-    ? icons[componentConfig.listIconName as keyof typeof icons] as LucideIcon 
-    : Check;
+  const IconComponent = getLucideIcon(componentConfig.listIconName) ?? Check;
 
   if (!componentConfig.visible) return null;
 

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { categories } from '@/data/categories';
 
-export type Framework = 'react' | 'angular' | 'vue' | 'html' | 'tailwind' | 'streamlit' | 'tkinter' | 'winui3';
+export type Framework = 'react' | 'angular' | 'streamlit' | 'tkinter' | 'winui3';
 export type ComponentState = 'default' | 'hover' | 'active' | 'focus' | 'disabled';
 export type PreviewBackground = 'light' | 'dark' | 'checkered';
 
@@ -1045,6 +1047,13 @@ export const componentDefaults: Record<string, Partial<ComponentConfig>> = {
   },
 };
 
+export function getCategoryForComponent(componentName: string): string {
+  const found = categories.find((cat) =>
+    cat.components.some((c) => c.name === componentName)
+  );
+  return found?.name ?? 'Buttons';
+}
+
 interface CustomizationState {
   selectedCategory: string;
   selectedComponent: string;
@@ -1054,9 +1063,11 @@ interface CustomizationState {
   activeState: ComponentState;
   previewBackground: PreviewBackground;
   componentConfig: ComponentConfig;
-  
+
   setSelectedCategory: (category: string) => void;
   setSelectedComponent: (component: string) => void;
+  selectComponentWithCategory: (component: string, category?: string) => void;
+  loadTemplate: (component: string, category: string, config: Partial<ComponentConfig>) => void;
   setSelectedFramework: (framework: Framework) => void;
   toggleCodeView: () => void;
   setCodeViewOpen: (open: boolean) => void;
@@ -1067,48 +1078,84 @@ interface CustomizationState {
   resetComponentConfig: () => void;
 }
 
-export const useCustomizationStore = create<CustomizationState>((set) => ({
-  selectedCategory: 'Buttons',
-  selectedComponent: 'Standard Button',
-  selectedFramework: 'react',
-  showCodeView: false,
-  codeViewOpen: false,
-  activeState: 'default',
-  previewBackground: 'light',
-  componentConfig: { ...defaultComponentConfig, ...componentDefaults['Standard Button'] },
-  
-  setSelectedCategory: (category) => set({ selectedCategory: category }),
-  setSelectedComponent: (component) => set({ 
-    selectedComponent: component,
-    componentConfig: { 
-      ...defaultComponentConfig, 
-      ...(componentDefaults[component] || {}) 
-    },
-    activeState: 'default',
-  }),
-  setSelectedFramework: (framework) => set({ selectedFramework: framework }),
-  toggleCodeView: () => set((state) => ({ showCodeView: !state.showCodeView })),
-  setCodeViewOpen: (open) => set({ codeViewOpen: open }),
-  setActiveState: (state) => set({ activeState: state }),
-  setPreviewBackground: (bg) => set({ previewBackground: bg }),
-  updateComponentConfig: (updates) =>
-    set((state) => ({
-      componentConfig: { ...state.componentConfig, ...updates },
-    })),
-  updateStateStyles: (stateName, updates) =>
-    set((state) => ({
-      componentConfig: {
-        ...state.componentConfig,
-        stateStyles: {
-          ...state.componentConfig.stateStyles,
-          [stateName]: { ...state.componentConfig.stateStyles[stateName], ...updates },
-        },
-      },
-    })),
-  resetComponentConfig: () => set((state) => ({ 
-    componentConfig: { 
-      ...defaultComponentConfig, 
-      ...(componentDefaults[state.selectedComponent] || {}) 
-    } 
-  })),
-}));
+const buildComponentConfig = (component: string, overrides?: Partial<ComponentConfig>): ComponentConfig => ({
+  ...defaultComponentConfig,
+  ...(componentDefaults[component] || {}),
+  ...(overrides || {}),
+  stateStyles: {
+    ...defaultComponentConfig.stateStyles,
+    ...(componentDefaults[component]?.stateStyles || {}),
+    ...(overrides?.stateStyles || {}),
+  },
+});
+
+export const useCustomizationStore = create<CustomizationState>()(
+  persist(
+    (set) => ({
+      selectedCategory: 'Buttons',
+      selectedComponent: 'Standard Button',
+      selectedFramework: 'react',
+      showCodeView: false,
+      codeViewOpen: false,
+      activeState: 'default',
+      previewBackground: 'light',
+      componentConfig: buildComponentConfig('Standard Button'),
+
+      setSelectedCategory: (category) => set({ selectedCategory: category }),
+      setSelectedComponent: (component) =>
+        set({
+          selectedComponent: component,
+          componentConfig: buildComponentConfig(component),
+          activeState: 'default',
+        }),
+      selectComponentWithCategory: (component, category) =>
+        set({
+          selectedCategory: category ?? getCategoryForComponent(component),
+          selectedComponent: component,
+          componentConfig: buildComponentConfig(component),
+          activeState: 'default',
+        }),
+      loadTemplate: (component, category, config) =>
+        set({
+          selectedCategory: category || getCategoryForComponent(component),
+          selectedComponent: component,
+          componentConfig: buildComponentConfig(component, config),
+          activeState: 'default',
+        }),
+      setSelectedFramework: (framework) => set({ selectedFramework: framework }),
+      toggleCodeView: () => set((state) => ({ showCodeView: !state.showCodeView })),
+      setCodeViewOpen: (open) => set({ codeViewOpen: open }),
+      setActiveState: (state) => set({ activeState: state }),
+      setPreviewBackground: (bg) => set({ previewBackground: bg }),
+      updateComponentConfig: (updates) =>
+        set((state) => ({
+          componentConfig: { ...state.componentConfig, ...updates },
+        })),
+      updateStateStyles: (stateName, updates) =>
+        set((state) => ({
+          componentConfig: {
+            ...state.componentConfig,
+            stateStyles: {
+              ...state.componentConfig.stateStyles,
+              [stateName]: { ...state.componentConfig.stateStyles[stateName], ...updates },
+            },
+          },
+        })),
+      resetComponentConfig: () =>
+        set((state) => ({
+          componentConfig: buildComponentConfig(state.selectedComponent),
+          activeState: 'default',
+        })),
+    }),
+    {
+      name: 'multi-style-customization-storage',
+      partialize: (state) => ({
+        selectedCategory: state.selectedCategory,
+        selectedComponent: state.selectedComponent,
+        selectedFramework: state.selectedFramework,
+        previewBackground: state.previewBackground,
+        componentConfig: state.componentConfig,
+      }),
+    }
+  )
+);

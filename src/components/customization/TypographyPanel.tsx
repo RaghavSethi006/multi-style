@@ -1,4 +1,4 @@
-import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { useCustomizationStore, type ComponentConfig } from '@/store/useCustomizationStore';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -17,6 +17,7 @@ const fontFamilies = [
   'Georgia',
   'Arial',
   'Times New Roman',
+  'monospace',
 ];
 
 const fontWeights = [
@@ -38,8 +39,11 @@ export const TypographyPanel = () => {
     <div className="space-y-6">
       {/* Text Content */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Text Content</Label>
+        <Label htmlFor="typo-text" className="text-sm font-medium">
+          Text Content
+        </Label>
         <input
+          id="typo-text"
           type="text"
           value={componentConfig.text}
           onChange={(e) => updateComponentConfig({ text: e.target.value })}
@@ -49,8 +53,11 @@ export const TypographyPanel = () => {
 
       {/* Font Family */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Font Family</Label>
+        <Label htmlFor="typo-font-family" className="text-sm font-medium">
+          Font Family
+        </Label>
         <select
+          id="typo-font-family"
           value={componentConfig.fontFamily}
           onChange={(e) => updateComponentConfig({ fontFamily: e.target.value })}
           className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -80,8 +87,11 @@ export const TypographyPanel = () => {
 
       {/* Font Weight */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Font Weight</Label>
+        <Label htmlFor="typo-font-weight" className="text-sm font-medium">
+          Font Weight
+        </Label>
         <select
+          id="typo-font-weight"
           value={componentConfig.fontWeight}
           onChange={(e) => updateComponentConfig({ fontWeight: Number(e.target.value) })}
           className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -100,11 +110,19 @@ export const TypographyPanel = () => {
         <ToggleGroup
           type="single"
           value={componentConfig.fontStyle}
-          onValueChange={(value: 'normal' | 'italic') => value && updateComponentConfig({ fontStyle: value })}
+          onValueChange={(value) => {
+            if (value === 'normal' || value === 'italic') {
+              updateComponentConfig({ fontStyle: value });
+            }
+          }}
           className="justify-start"
         >
-          <ToggleGroupItem value="normal" className="px-4">Normal</ToggleGroupItem>
-          <ToggleGroupItem value="italic" className="px-4 italic">Italic</ToggleGroupItem>
+          <ToggleGroupItem value="normal" className="px-4">
+            Normal
+          </ToggleGroupItem>
+          <ToggleGroupItem value="italic" className="px-4 italic">
+            Italic
+          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
@@ -144,22 +162,41 @@ export const TypographyPanel = () => {
         <ToggleGroup
           type="single"
           value={componentConfig.textAlign}
-          onValueChange={(value: 'left' | 'center' | 'right' | 'justify') => value && updateComponentConfig({ textAlign: value })}
+          onValueChange={(value) => {
+            if (value === 'left' || value === 'center' || value === 'right' || value === 'justify') {
+              updateComponentConfig({ textAlign: value });
+            }
+          }}
           className="justify-start"
         >
-          <ToggleGroupItem value="left"><AlignLeft size={18} /></ToggleGroupItem>
-          <ToggleGroupItem value="center"><AlignCenter size={18} /></ToggleGroupItem>
-          <ToggleGroupItem value="right"><AlignRight size={18} /></ToggleGroupItem>
-          <ToggleGroupItem value="justify"><AlignJustify size={18} /></ToggleGroupItem>
+          <ToggleGroupItem value="left" aria-label="Align left">
+            <AlignLeft size={18} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="center" aria-label="Align center">
+            <AlignCenter size={18} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="right" aria-label="Align right">
+            <AlignRight size={18} />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="justify" aria-label="Justify">
+            <AlignJustify size={18} />
+          </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
       {/* Text Transform */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Text Transform</Label>
+        <Label htmlFor="typo-transform" className="text-sm font-medium">
+          Text Transform
+        </Label>
         <select
+          id="typo-transform"
           value={componentConfig.textTransform}
-          onChange={(e) => updateComponentConfig({ textTransform: e.target.value as any })}
+          onChange={(e) =>
+            updateComponentConfig({
+              textTransform: e.target.value as ComponentConfig['textTransform'],
+            })
+          }
           className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="none">None</option>
@@ -171,10 +208,17 @@ export const TypographyPanel = () => {
 
       {/* Text Decoration */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium">Text Decoration</Label>
+        <Label htmlFor="typo-decoration" className="text-sm font-medium">
+          Text Decoration
+        </Label>
         <select
+          id="typo-decoration"
           value={componentConfig.textDecoration}
-          onChange={(e) => updateComponentConfig({ textDecoration: e.target.value as any })}
+          onChange={(e) =>
+            updateComponentConfig({
+              textDecoration: e.target.value as ComponentConfig['textDecoration'],
+            })
+          }
           className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         >
           <option value="none">None</option>

@@ -10,11 +10,17 @@ import { EffectsPanel } from './customization/EffectsPanel';
 import { StatesPanel } from './customization/StatesPanel';
 import { ComponentSpecificPanel } from './customization/ComponentSpecificPanel';
 
-export const CustomizationPanel = () => {
+import { cn } from '@/lib/utils';
+
+interface CustomizationPanelProps {
+  className?: string;
+}
+
+export const CustomizationPanel = ({ className }: CustomizationPanelProps) => {
   const { selectedComponent, resetComponentConfig } = useCustomizationStore();
 
   return (
-    <div className="w-80 bg-card border-r border-border h-full flex flex-col">
+    <div className={cn('w-80 bg-card border-r border-border h-full flex flex-col shrink-0', className)}>
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
           <h3 className="text-sm font-semibold">Property Inspector</h3>

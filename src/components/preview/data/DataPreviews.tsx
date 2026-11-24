@@ -1,7 +1,6 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
-import { ChevronLeft, ChevronRight, Circle } from 'lucide-react';
-import * as icons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { getLucideIcon } from '@/lib/icons';
 import { useState, useEffect } from 'react';
 
 export const TablePreview = () => {
@@ -389,9 +388,7 @@ export const AvatarPreview = () => {
 export const IconPreview = () => {
   const { componentConfig } = useCustomizationStore();
 
-  const IconComponent = componentConfig.iconName 
-    ? icons[componentConfig.iconName as keyof typeof icons] as LucideIcon 
-    : icons.Star;
+  const IconComponent = getLucideIcon(componentConfig.iconName) ?? Star;
 
   if (!componentConfig.visible) return null;
 

@@ -1,4 +1,5 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { computeBoxShadow, computeStateStyles, toColorPickerValue } from '@/lib/styleUtils';
 import { Search, X, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
@@ -144,12 +145,14 @@ export const TextAreaPreview = () => {
     borderWidth: `${componentConfig.borderWidth}px`,
     borderStyle: componentConfig.borderStyle,
     borderRadius,
+    boxShadow: computeBoxShadow(componentConfig),
     opacity: componentConfig.opacity,
     padding: `${componentConfig.paddingTop}px ${componentConfig.paddingRight}px ${componentConfig.paddingBottom}px ${componentConfig.paddingLeft}px`,
     width: componentConfig.width === 'auto' ? '320px' : componentConfig.width,
     resize: componentConfig.textareaResize,
     outline: 'none',
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+    ...computeStateStyles(componentConfig, activeState),
   };
 
   const labelStyles: React.CSSProperties = {
@@ -212,10 +215,12 @@ export const PasswordInputPreview = () => {
     borderWidth: `${componentConfig.borderWidth}px`,
     borderStyle: componentConfig.borderStyle,
     borderRadius,
+    boxShadow: computeBoxShadow(componentConfig),
     padding: `${componentConfig.paddingTop}px ${componentConfig.paddingRight}px ${componentConfig.paddingBottom}px ${componentConfig.paddingLeft}px`,
     width: '100%',
     outline: 'none',
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+    ...computeStateStyles(componentConfig, activeState),
   };
 
   const labelStyles: React.CSSProperties = {
@@ -256,6 +261,7 @@ export const PasswordInputPreview = () => {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
+          aria-label={showPassword ? 'Hide password' : 'Show password'}
           style={{
             position: 'absolute',
             right: '12px',
@@ -321,7 +327,9 @@ export const SearchFieldPreview = () => {
       />
       {componentConfig.searchClearable && value && (
         <button
+          type="button"
           onClick={() => setValue('')}
+          aria-label="Clear search"
           style={{
             position: 'absolute',
             right: '12px',
@@ -407,7 +415,9 @@ export const NumberInputPreview = () => {
         )
       )}
       <div style={{ display: 'flex', borderRadius, overflow: 'hidden' }}>
-        <button 
+        <button
+          type="button"
+          aria-label="Decrease value"
           style={{ ...buttonStyles, borderTopLeftRadius: borderRadius, borderBottomLeftRadius: borderRadius }}
           onClick={() => setValue(v => v - 1)}
           disabled={activeState === 'disabled'}
@@ -416,12 +426,15 @@ export const NumberInputPreview = () => {
         </button>
         <input
           type="number"
+          aria-label={componentConfig.label || 'Number input'}
           value={value}
           onChange={(e) => setValue(Number(e.target.value))}
           style={{ ...inputStyles, borderRadius: 0, borderLeft: 'none', borderRight: 'none' }}
           disabled={activeState === 'disabled'}
         />
-        <button 
+        <button
+          type="button"
+          aria-label="Increase value"
           style={{ ...buttonStyles, borderTopRightRadius: borderRadius, borderBottomRightRadius: borderRadius }}
           onClick={() => setValue(v => v + 1)}
           disabled={activeState === 'disabled'}
@@ -622,7 +635,8 @@ export const ColorPickerPreview = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <input
           type="color"
-          value={componentConfig.backgroundColor}
+          aria-label={componentConfig.label || 'Color picker'}
+          value={toColorPickerValue(componentConfig.backgroundColor)}
           onChange={(e) => updateComponentConfig({ backgroundColor: e.target.value })}
           style={{
             width: '48px',

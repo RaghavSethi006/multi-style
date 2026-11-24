@@ -1,15 +1,13 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
-import * as icons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { getLucideIcon } from '@/lib/icons';
 import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
 
 export const FABButton = () => {
   const { componentConfig, activeState } = useCustomizationStore();
   const { isEditing, editValue, setEditValue, inputRef, startEditing, stopEditing, handleKeyDown } = useInlineEdit('text');
 
-  const IconComponent = componentConfig.buttonIcon 
-    ? icons[componentConfig.buttonIcon as keyof typeof icons] as LucideIcon 
-    : icons.Plus;
+  const IconComponent = getLucideIcon(componentConfig.buttonIcon) ?? Plus;
 
   const getStateStyles = () => {
     if (activeState === 'default') return {};

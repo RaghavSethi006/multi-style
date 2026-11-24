@@ -2,10 +2,12 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { useTemplateStore, CustomFramework, SavedTemplate } from '@/store/useTemplateStore';
+import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { downloadFile } from '@/utils/download';
 import { cn } from '@/lib/utils';
 import {
   Package, Plus, Download, Upload, Trash2, Edit2,
-  FileJson, Check, X, ChevronDown, FolderOpen
+  X, ChevronDown, FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,10 +40,13 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { MiniPreview } from '@/components/catalog/MiniPreview';
 
+const MAX_IMPORT_BYTES = 2 * 1024 * 1024; // 2 MB
+
 const Frameworks = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { loadTemplate } = useCustomizationStore();
   const {
     frameworks,
     templates,
@@ -62,7 +67,6 @@ const Frameworks = () => {
   const [selectedFramework, setSelectedFramework] = useState<CustomFramework | null>(null);
   const [expandedFramework, setExpandedFramework] = useState<string | null>(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -76,32 +80,36 @@ const Frameworks = () => {
     setSelectedTemplateIds([]);
   };
 
-  const handleCreate = () => {
-    if (!formData.name.trim()) return;
-    
+  const handleCreate = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) return;
+
     createFramework({
-      name: formData.name.trim(),
+      name: trimmedName,
       description: formData.description.trim(),
       version: formData.version.trim() || '1.0.0',
       author: formData.author.trim(),
       templates: selectedTemplateIds,
     });
-    
+
     setCreateDialogOpen(false);
     resetForm();
-    toast({ title: 'Framework created', description: `"${formData.name}" has been created.` });
+    toast({ title: 'Framework created', description: `"${trimmedName}" has been created.` });
   };
 
-  const handleUpdate = () => {
-    if (!selectedFramework || !formData.name.trim()) return;
-    
+  const handleUpdate = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const trimmedName = formData.name.trim();
+    if (!selectedFramework || !trimmedName) return;
+
     updateFramework(selectedFramework.id, {
-      name: formData.name.trim(),
+      name: trimmedName,
       description: formData.description.trim(),
-      version: formData.version.trim(),
+      version: formData.version.trim() || '1.0.0',
       author: formData.author.trim(),
     });
-    
+
     setEditDialogOpen(false);
     setSelectedFramework(null);
     resetForm();
@@ -110,7 +118,7 @@ const Frameworks = () => {
 
   const handleDelete = () => {
     if (!selectedFramework) return;
-    
+
     deleteFramework(selectedFramework.id);
     setDeleteDialogOpen(false);
     setSelectedFramework(null);
@@ -120,38 +128,58 @@ const Frameworks = () => {
   const handleExport = (framework: CustomFramework) => {
     const jsonData = exportFramework(framework.id);
     if (!jsonData) return;
-    
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${framework.name.toLowerCase().replace(/\s+/g, '-')}-framework.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
+
+    const safeSlug = framework.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'framework';
+    downloadFile(jsonData, `${safeSlug}-framework.json`);
+
     toast({ title: 'Framework exported', description: 'Download started.' });
   };
 
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    
+
+    if (file.size > MAX_IMPORT_BYTES) {
+      toast({
+        title: 'File too large',
+        description: 'Framework JSON files must be 2 MB or smaller.',
+        variant: 'destructive',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
-      const content = e.target?.result as string;
+      const content = e.target?.result;
+      if (typeof content !== 'string') {
+        toast({
+          title: 'Import failed',
+          description: 'Could not read file contents as text.',
+          variant: 'destructive',
+        });
+        return;
+      }
       const result = importFramework(content);
-      
+
       if (result.success) {
         toast({ title: 'Framework imported', description: result.message });
       } else {
         toast({ title: 'Import failed', description: result.message, variant: 'destructive' });
       }
     };
+    reader.onerror = () => {
+      toast({
+        title: 'Import failed',
+        description: 'An error occurred while reading the selected file.',
+        variant: 'destructive',
+      });
+    };
     reader.readAsText(file);
-    
-    // Reset input
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -159,12 +187,17 @@ const Frameworks = () => {
 
   const handleAddTemplates = () => {
     if (!selectedFramework) return;
-    
+
     addTemplatesToFramework(selectedFramework.id, selectedTemplateIds);
     setAddTemplatesDialogOpen(false);
     setSelectedFramework(null);
     setSelectedTemplateIds([]);
     toast({ title: 'Templates added' });
+  };
+
+  const handleOpenTemplateInPlayground = (template: SavedTemplate) => {
+    loadTemplate(template.componentType, template.componentCategory, template.config);
+    navigate('/playground');
   };
 
   const openEditDialog = (framework: CustomFramework) => {
@@ -203,7 +236,7 @@ const Frameworks = () => {
       <div className="flex-1 px-6 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header Section */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                 <Package className="text-primary" size={28} />
@@ -217,9 +250,10 @@ const Frameworks = () => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json"
+                accept=".json,application/json"
                 onChange={handleImport}
                 className="hidden"
+                aria-label="Import framework JSON file"
               />
               <Button
                 onClick={() => fileInputRef.current?.click()}
@@ -263,25 +297,25 @@ const Frameworks = () => {
                     <Card className="overflow-hidden">
                       <CardContent className="p-0">
                         {/* Framework Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-                          <CollapsibleTrigger className="flex items-center gap-3 flex-1 text-left">
+                        <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-border bg-muted/30">
+                          <CollapsibleTrigger className="flex items-center gap-3 flex-1 text-left min-w-0">
                             <ChevronDown
                               size={18}
                               className={cn(
-                                'text-muted-foreground transition-transform',
+                                'text-muted-foreground transition-transform shrink-0',
                                 isExpanded && 'rotate-180'
                               )}
                             />
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-foreground">{framework.name}</h3>
-                              <p className="text-sm text-muted-foreground">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-semibold text-foreground truncate">{framework.name}</h3>
+                              <p className="text-sm text-muted-foreground truncate">
                                 v{framework.version} • {frameworkTemplates.length} template{frameworkTemplates.length !== 1 ? 's' : ''}
                                 {framework.author && ` • By ${framework.author}`}
                               </p>
                             </div>
                           </CollapsibleTrigger>
 
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2 shrink-0">
                             <Button
                               onClick={() => openAddTemplatesDialog(framework)}
                               size="sm"
@@ -305,6 +339,8 @@ const Frameworks = () => {
                               size="sm"
                               variant="outline"
                               className="px-2"
+                              aria-label={`Edit ${framework.name}`}
+                              title="Edit framework"
                             >
                               <Edit2 size={14} />
                             </Button>
@@ -316,6 +352,8 @@ const Frameworks = () => {
                               size="sm"
                               variant="outline"
                               className="px-2 text-destructive"
+                              aria-label={`Delete ${framework.name}`}
+                              title="Delete framework"
                             >
                               <Trash2 size={14} />
                             </Button>
@@ -336,21 +374,31 @@ const Frameworks = () => {
                                 {frameworkTemplates.map((template) => (
                                   <div
                                     key={template.id}
-                                    className="relative group p-3 border border-border rounded-lg bg-background"
+                                    className="relative group p-3 border border-border rounded-lg bg-background hover:border-primary transition-colors"
                                   >
                                     <button
+                                      type="button"
                                       onClick={() =>
                                         removeTemplateFromFramework(framework.id, template.id)
                                       }
-                                      className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                      aria-label={`Remove ${template.name} from ${framework.name}`}
+                                      title="Remove from framework"
+                                      className="absolute -top-2 -right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                                     >
                                       <X size={12} />
                                     </button>
-                                    <div className="h-16 flex items-center justify-center mb-2">
-                                      <MiniPreview componentName={template.componentType} />
-                                    </div>
-                                    <p className="text-xs font-medium truncate">{template.name}</p>
-                                    <p className="text-xs text-muted-foreground">{template.componentType}</p>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenTemplateInPlayground(template)}
+                                      className="w-full text-left"
+                                      title="Open template in Playground"
+                                    >
+                                      <div className="h-16 flex items-center justify-center mb-2">
+                                        <MiniPreview componentName={template.componentType} />
+                                      </div>
+                                      <p className="text-xs font-medium truncate">{template.name}</p>
+                                      <p className="text-xs text-muted-foreground">{template.componentType}</p>
+                                    </button>
                                   </div>
                                 ))}
                               </div>
@@ -400,14 +448,17 @@ const Frameworks = () => {
       </div>
 
       {/* Create/Edit Framework Dialog */}
-      <Dialog open={createDialogOpen || editDialogOpen} onOpenChange={(open) => {
-        if (!open) {
-          setCreateDialogOpen(false);
-          setEditDialogOpen(false);
-          setSelectedFramework(null);
-          resetForm();
-        }
-      }}>
+      <Dialog
+        open={createDialogOpen || editDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateDialogOpen(false);
+            setEditDialogOpen(false);
+            setSelectedFramework(null);
+            resetForm();
+          }
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -420,18 +471,21 @@ const Frameworks = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <form onSubmit={editDialogOpen ? handleUpdate : handleCreate} className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Name *</label>
+              <label htmlFor="fw-name" className="text-sm font-medium">Name *</label>
               <Input
+                id="fw-name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="My UI Kit"
+                autoFocus
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Description</label>
+              <label htmlFor="fw-desc" className="text-sm font-medium">Description</label>
               <Textarea
+                id="fw-desc"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="A collection of components for..."
@@ -440,16 +494,18 @@ const Frameworks = () => {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium">Version</label>
+                <label htmlFor="fw-version" className="text-sm font-medium">Version</label>
                 <Input
+                  id="fw-version"
                   value={formData.version}
                   onChange={(e) => setFormData({ ...formData, version: e.target.value })}
                   placeholder="1.0.0"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Author</label>
+                <label htmlFor="fw-author" className="text-sm font-medium">Author</label>
                 <Input
+                  id="fw-author"
                   value={formData.author}
                   onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                   placeholder="Your name"
@@ -459,7 +515,7 @@ const Frameworks = () => {
 
             {createDialogOpen && templates.length > 0 && (
               <div>
-                <label className="text-sm font-medium">Include Templates</label>
+                <span className="text-sm font-medium">Include Templates</span>
                 <div className="mt-2 max-h-48 overflow-y-auto border border-border rounded-lg p-2 space-y-2">
                   {templates.map((template) => (
                     <label
@@ -479,23 +535,24 @@ const Frameworks = () => {
                 </div>
               </div>
             )}
-          </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setCreateDialogOpen(false);
-                setEditDialogOpen(false);
-                resetForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={editDialogOpen ? handleUpdate : handleCreate}>
-              {editDialogOpen ? 'Save Changes' : 'Create Framework'}
-            </Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setCreateDialogOpen(false);
+                  setEditDialogOpen(false);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!formData.name.trim()}>
+                {editDialogOpen ? 'Save Changes' : 'Create Framework'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

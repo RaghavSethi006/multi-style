@@ -1,48 +1,132 @@
+import { useState, useEffect, useMemo } from 'react';
 import { categories } from '@/data/categories';
 import { useCustomizationStore } from '@/store/useCustomizationStore';
 import { cn } from '@/lib/utils';
+import { ChevronDown, Search } from 'lucide-react';
 
-export const Sidebar = () => {
-  const { selectedCategory, selectedComponent, setSelectedCategory, setSelectedComponent } =
-    useCustomizationStore();
+interface SidebarProps {
+  onSelectComponent?: () => void;
+  className?: string;
+}
+
+export const Sidebar = ({ onSelectComponent, className }: SidebarProps) => {
+  const {
+    selectedCategory,
+    selectedComponent,
+    setSelectedCategory,
+    selectComponentWithCategory,
+  } = useCustomizationStore();
+  const [filterText, setFilterText] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([selectedCategory]);
+
+  useEffect(() => {
+    setExpandedCategories((prev) =>
+      prev.includes(selectedCategory) ? prev : [...prev, selectedCategory]
+    );
+  }, [selectedCategory]);
+
+  const filteredCategories = useMemo(() => {
+    const query = filterText.trim().toLowerCase();
+    if (!query) return categories;
+    return categories
+      .map((cat) => {
+        const categoryMatches = cat.name.toLowerCase().includes(query);
+        const matchingComponents = categoryMatches
+          ? cat.components
+          : cat.components.filter((c) => c.name.toLowerCase().includes(query));
+        return { ...cat, components: matchingComponents };
+      })
+      .filter((cat) => cat.components.length > 0);
+  }, [filterText]);
+
+  const toggleCategory = (categoryName: string) => {
+    setSelectedCategory(categoryName);
+    setExpandedCategories((prev) =>
+      prev.includes(categoryName)
+        ? prev.filter((c) => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
 
   return (
-    <aside className="w-64 bg-card border-r border-border h-screen overflow-y-auto elevation-1">
+    <aside
+      className={cn(
+        'w-64 bg-card border-r border-border h-full overflow-y-auto elevation-1 shrink-0',
+        className
+      )}
+    >
       <div className="p-4">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-          Components
-        </h2>
-        <nav className="space-y-1">
-          {categories.map((category) => {
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            Components
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {categories.reduce((acc, c) => acc + c.components.filter((x) => x.available).length, 0)}
+          </span>
+        </div>
+
+        <div className="relative mb-3">
+          <Search
+            size={14}
+            className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+          />
+          <input
+            type="text"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            placeholder="Filter components..."
+            aria-label="Filter components in sidebar"
+            className="w-full pl-8 pr-3 py-1.5 text-xs bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
+        <nav aria-label="Component categories" className="space-y-1">
+          {filteredCategories.map((category) => {
             const Icon = category.icon;
-            const isActive = selectedCategory === category.name;
+            const isActiveCategory = selectedCategory === category.name;
+            const isExpanded =
+              Boolean(filterText.trim()) || expandedCategories.includes(category.name);
 
             return (
               <div key={category.id} className="space-y-1">
                 <button
-                  onClick={() => setSelectedCategory(category.name)}
+                  type="button"
+                  onClick={() => toggleCategory(category.name)}
+                  aria-expanded={isExpanded}
                   className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-smooth text-sm font-medium',
-                    isActive
+                    'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-smooth text-sm font-medium',
+                    isActiveCategory
                       ? 'bg-primary text-primary-foreground'
                       : 'text-foreground hover:bg-muted'
                   )}
                 >
-                  <Icon size={20} />
-                  <span>{category.name}</span>
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    <Icon size={18} className="shrink-0" />
+                    <span className="truncate">{category.name}</span>
+                  </span>
+                  <ChevronDown
+                    size={14}
+                    className={cn(
+                      'shrink-0 transition-transform',
+                      isExpanded && 'rotate-180'
+                    )}
+                  />
                 </button>
 
-                {isActive && (
-                  <div className="ml-8 space-y-0.5 mt-1">
+                {isExpanded && (
+                  <div className="ml-6 space-y-0.5 mt-1 border-l border-border pl-2">
                     {category.components.map((component) => (
                       <button
                         key={component.id}
-                        onClick={() =>
-                          component.available && setSelectedComponent(component.name)
-                        }
+                        type="button"
+                        onClick={() => {
+                          if (!component.available) return;
+                          selectComponentWithCategory(component.name, category.name);
+                          onSelectComponent?.();
+                        }}
                         disabled={!component.available}
                         className={cn(
-                          'w-full text-left px-3 py-2 rounded-md text-sm transition-fast',
+                          'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-fast',
                           selectedComponent === component.name
                             ? 'bg-primary/10 text-primary font-medium'
                             : component.available
@@ -61,6 +145,11 @@ export const Sidebar = () => {
               </div>
             );
           })}
+          {filteredCategories.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">
+              No components match "{filterText}"
+            </p>
+          )}
         </nav>
       </div>
     </aside>

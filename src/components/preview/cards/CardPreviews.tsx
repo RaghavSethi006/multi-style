@@ -1,4 +1,5 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
+import { computeBorderRadius, computeBoxShadow, computeGlassmorphismStyles, computeStateStyles } from '@/lib/styleUtils';
 import { ChevronDown, User } from 'lucide-react';
 import { useState } from 'react';
 import { useInlineEdit, getInlineEditStyles } from '@/hooks/useInlineEdit';
@@ -9,22 +10,19 @@ export const BasicCardPreview = () => {
   const subtitleEdit = useInlineEdit('cardSubtitle');
   const textEdit = useInlineEdit('text');
 
-  const borderRadius = componentConfig.linkBorderRadius
-    ? `${componentConfig.borderRadius}px`
-    : `${componentConfig.borderTopLeftRadius}px ${componentConfig.borderTopRightRadius}px ${componentConfig.borderBottomRightRadius}px ${componentConfig.borderBottomLeftRadius}px`;
-
-  const boxShadow = `${componentConfig.boxShadowInset ? 'inset ' : ''}${componentConfig.boxShadowX}px ${componentConfig.boxShadowY}px ${componentConfig.boxShadowBlur}px ${componentConfig.boxShadowSpread}px ${componentConfig.boxShadowColor}`;
-
   const cardStyles: React.CSSProperties = {
-    width: '320px',
+    width: componentConfig.width === 'auto' ? '320px' : componentConfig.width,
     backgroundColor: componentConfig.backgroundColor,
     borderColor: componentConfig.borderColor,
     borderWidth: `${componentConfig.borderWidth}px`,
     borderStyle: componentConfig.borderStyle,
-    borderRadius,
-    boxShadow,
+    borderRadius: computeBorderRadius(componentConfig),
+    boxShadow: computeBoxShadow(componentConfig),
+    opacity: componentConfig.opacity,
     overflow: 'hidden',
     transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+    ...computeGlassmorphismStyles(componentConfig),
+    ...computeStateStyles(componentConfig, activeState),
   };
 
   const titleStyles: React.CSSProperties = {
@@ -115,7 +113,7 @@ export const BasicCardPreview = () => {
           gap: '12px',
           justifyContent: 'flex-end',
         }}>
-          <button style={{
+          <button type="button" style={{
             padding: '8px 16px',
             backgroundColor: 'transparent',
             color: '#6B7280',
@@ -126,7 +124,7 @@ export const BasicCardPreview = () => {
           }}>
             Cancel
           </button>
-          <button style={{
+          <button type="button" style={{
             padding: '8px 16px',
             backgroundColor: '#3B82F6',
             color: '#FFFFFF',

@@ -36,14 +36,14 @@ This is what makes multi-style different from every other component playground. 
 
 ## Features
 
-- **30+ components** across buttons, inputs, cards, navigation, feedback, lists, selectors, data display, and text
+- **49 components across 11 categories** covering buttons, inputs, cards, navigation, feedback, lists, selectors, data display, media, text, and interactive components
 - **5 export targets** — React, Angular, Streamlit, tkinter, and WinUI3
 - **6 customization panels** — Appearance, Typography, Size & Layout, Effects, States, and Component-specific options
-- **Live preview** — every change reflects instantly, no reload needed
-- **Idiomatic code generation** — the output for each framework looks hand-written, not machine-generated
-- **One-click copy** — export directly to your clipboard
-- **Component catalog** — browse all components with interactive mini-previews
-- **Template system** — save and restore named customization presets
+- **Live preview** — every change reflects instantly with desktop, tablet, and mobile viewports
+- **Component-aware code generation** — outputs idiomatic React, Angular, Streamlit, Tkinter, and WinUI3 code tailored to the active component
+- **One-click copy & download** — export directly to your clipboard or download source files
+- **Component catalog** — browse and search all components with interactive mini-previews
+- **Template & framework system** — save, duplicate, organize, and import/export JSON design systems with Zod validation
 
 ---
 
@@ -51,30 +51,39 @@ This is what makes multi-style different from every other component playground. 
 
 ### Prerequisites
 
-- Node.js 18+ or Bun 1.0+
+- Node.js 18+ and npm
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/multi-style.git
+git clone https://github.com/RaghavSethi006/multi-style.git
 cd multi-style
 
 # Install dependencies
 npm install
-# or
-bun install
 ```
 
 ### Development
 
 ```bash
 npm run dev
-# or
-bun dev
 ```
 
-Open [http://localhost:8080](http://localhost:8080) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Quality checks & tests
+
+```bash
+# Type-check
+npx tsc --noEmit
+
+# Lint
+npm run lint
+
+# Run unit tests
+npm test
+```
 
 ### Build for production
 
@@ -111,20 +120,28 @@ multi-style/
 │   │   ├── preview/          # Live preview components by category
 │   │   │   ├── buttons/
 │   │   │   ├── cards/
+│   │   │   ├── data/
+│   │   │   ├── feedback/
 │   │   │   ├── inputs/
-│   │   │   ├── text/
-│   │   │   └── ...
+│   │   │   ├── lists/
+│   │   │   ├── navigation/
+│   │   │   ├── selectors/
+│   │   │   └── text/
 │   │   └── ui/               # shadcn/ui base components
 │   ├── data/
-│   │   └── categories.ts     # Component catalog registry
+│   │   └── categories.ts     # Component catalog registry (49 components)
 │   ├── hooks/                # Custom React hooks
-│   ├── pages/                # Route-level page components
+│   ├── lib/
+│   │   ├── icons.ts          # Curated tree-shakeable Lucide icon registry
+│   │   ├── styleUtils.ts     # Color, shadow, gradient, and state style helpers
+│   │   └── utils.ts          # Classname merge helper
+│   ├── pages/                # Route-level page components (Home, Playground, Templates, Frameworks)
 │   ├── store/
-│   │   ├── useCustomizationStore.ts   # Active component + style state
-│   │   └── useTemplateStore.ts        # Saved template presets
+│   │   ├── useCustomizationStore.ts   # Persisted component + style state
+│   │   └── useTemplateStore.ts        # Saved templates & validated JSON framework import/export
 │   └── utils/
-│       ├── codeTemplates.ts  # Multi-framework code generation engine
-│       └── download.ts       # Export and download utilities
+│       ├── codeTemplates.ts  # Component-aware multi-framework code generation engine
+│       └── download.ts       # Export and clipboard utilities
 ├── public/
 ├── index.html
 ├── tailwind.config.ts
@@ -137,16 +154,17 @@ multi-style/
 
 | Category | Components |
 |---|---|
-| Buttons | Standard, Icon, FAB, Outline, Toggle |
-| Inputs | Text input, Textarea, Search, OTP |
-| Cards | Default, Image, Stats, Profile |
-| Navigation | Tabs, Breadcrumb, Pagination, Navbar |
-| Feedback | Alert, Badge, Toast, Progress, Skeleton |
-| Selectors | Checkbox, Radio, Switch, Select, Slider |
-| Lists | Default, Ordered, Description |
-| Data | Table, Avatar group, Chart |
-| Text | Heading, Paragraph, Label, Blockquote, Code block |
-| Advanced | Accordion, Dialog, Drawer, Dropdown, Tooltip |
+| Text & Typography | Heading, Paragraph, Label, Blockquote, Code Block |
+| Buttons | Standard Button, Icon Button, FAB Button, Outline Button, Toggle Button |
+| Lists | Simple List, Icon List, Checkbox List, Ordered List |
+| Forms & Inputs | Text Field, Text Area, Password Input, Search Field, Number Input, File Upload, Color Picker, Range Slider |
+| Selectors | Checkbox, Radio Group, Switch, Dropdown, Autocomplete |
+| Navigation | Nav Bar, Tabs, Breadcrumbs, Pagination, Stepper |
+| Cards & Containers | Basic Card, Image Card, Profile Card, Accordion |
+| Feedback & Indicators | Tooltip, Alert, Toast, Modal, Badge, Progress Bar, Skeleton |
+| Data Display | Table, Grid, Timeline, Carousel |
+| Media & Visuals | Image, Avatar, Icon, Chart |
+| Interactive & Advanced | Drag & Drop, Split Pane, Code Editor |
 
 ---
 
@@ -159,6 +177,8 @@ multi-style/
 | Styling | Tailwind CSS |
 | Component library | shadcn/ui + Radix UI |
 | State management | Zustand |
+| Validation | Zod |
+| Testing | Vitest |
 | Routing | React Router |
 | Icons | Lucide React |
 
@@ -208,4 +228,4 @@ MIT License — see [LICENSE](./LICENSE) for details.
 
 ---
 
-*Built by [Raghav Sethi](https://github.com/your-username)*
+*Built by [Raghav Sethi](https://github.com/RaghavSethi006)*

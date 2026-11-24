@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { useTemplateStore, SavedTemplate } from '@/store/useTemplateStore';
 import { useCustomizationStore } from '@/store/useCustomizationStore';
-import { cn } from '@/lib/utils';
-import { 
-  Bookmark, Copy, Edit2, Trash2, ArrowRight, 
-  Search, Plus, FolderOpen 
+import {
+  Bookmark, Copy, Edit2, Trash2, ArrowRight,
+  Search, Plus, FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -30,36 +29,42 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { MiniPreview } from '@/components/catalog/MiniPreview';
+import { useToast } from '@/hooks/use-toast';
 
 const Templates = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { templates, deleteTemplate, duplicateTemplate, updateTemplate } = useTemplateStore();
-  const { setSelectedComponent, setSelectedCategory, updateComponentConfig } = useCustomizationStore();
+  const { loadTemplate } = useCustomizationStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<SavedTemplate | null>(null);
   const [newName, setNewName] = useState('');
 
-  const filteredTemplates = templates.filter((t) =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.componentType.toLowerCase().includes(searchQuery.toLowerCase())
+  const trimmedQuery = searchQuery.trim().toLowerCase();
+  const filteredTemplates = templates.filter(
+    (t) =>
+      t.name.toLowerCase().includes(trimmedQuery) ||
+      t.componentType.toLowerCase().includes(trimmedQuery) ||
+      t.componentCategory.toLowerCase().includes(trimmedQuery)
   );
 
   const handleLoadTemplate = (template: SavedTemplate) => {
-    setSelectedComponent(template.componentType);
-    setSelectedCategory(template.componentCategory);
-    updateComponentConfig(template.config);
+    loadTemplate(template.componentType, template.componentCategory, template.config);
     navigate('/playground');
   };
 
   const handleDuplicate = (template: SavedTemplate) => {
     duplicateTemplate(template.id);
+    toast({ title: 'Template duplicated', description: `Created a copy of "${template.name}".` });
   };
 
-  const handleRename = () => {
+  const handleRename = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (selectedTemplate && newName.trim()) {
       updateTemplate(selectedTemplate.id, { name: newName.trim() });
+      toast({ title: 'Template renamed', description: `Renamed to "${newName.trim()}".` });
       setRenameDialogOpen(false);
       setSelectedTemplate(null);
       setNewName('');
@@ -69,6 +74,7 @@ const Templates = () => {
   const handleDelete = () => {
     if (selectedTemplate) {
       deleteTemplate(selectedTemplate.id);
+      toast({ title: 'Template deleted' });
       setDeleteDialogOpen(false);
       setSelectedTemplate(null);
     }
@@ -92,7 +98,7 @@ const Templates = () => {
       <div className="flex-1 px-6 py-8">
         <div className="max-w-6xl mx-auto">
           {/* Header Section */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
                 <Bookmark className="text-primary" size={28} />
@@ -113,6 +119,7 @@ const Templates = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
             <Input
               placeholder="Search templates..."
+              aria-label="Search saved templates"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -125,8 +132,15 @@ const Templates = () => {
               {filteredTemplates.map((template) => (
                 <Card key={template.id} className="group overflow-hidden hover:shadow-lg transition-all">
                   {/* Preview */}
-                  <div className="h-28 bg-muted/30 flex items-center justify-center border-b border-border">
+                  <div className="h-28 bg-muted/30 flex items-center justify-center border-b border-border relative">
                     <MiniPreview componentName={template.componentType} />
+                    {template.config?.backgroundColor && (
+                      <span
+                        title={`Primary color: ${template.config.backgroundColor}`}
+                        className="absolute bottom-2 right-2 w-4 h-4 rounded-full border border-border shadow-sm"
+                        style={{ backgroundColor: template.config.backgroundColor }}
+                      />
+                    )}
                   </div>
 
                   <CardContent className="p-4">
@@ -155,6 +169,8 @@ const Templates = () => {
                         size="sm"
                         variant="outline"
                         className="px-2"
+                        aria-label={`Duplicate ${template.name}`}
+                        title="Duplicate template"
                       >
                         <Copy size={14} />
                       </Button>
@@ -163,6 +179,8 @@ const Templates = () => {
                         size="sm"
                         variant="outline"
                         className="px-2"
+                        aria-label={`Rename ${template.name}`}
+                        title="Rename template"
                       >
                         <Edit2 size={14} />
                       </Button>
@@ -171,6 +189,8 @@ const Templates = () => {
                         size="sm"
                         variant="outline"
                         className="px-2 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                        aria-label={`Delete ${template.name}`}
+                        title="Delete template"
                       >
                         <Trash2 size={14} />
                       </Button>
@@ -178,6 +198,17 @@ const Templates = () => {
                   </CardContent>
                 </Card>
               ))}
+            </div>
+          ) : templates.length > 0 ? (
+            <div className="text-center py-16 space-y-3">
+              <Search size={40} className="mx-auto text-muted-foreground" />
+              <h3 className="text-lg font-semibold text-foreground">No matching templates</h3>
+              <p className="text-muted-foreground text-sm">
+                No saved templates match "{searchQuery}".
+              </p>
+              <Button variant="outline" onClick={() => setSearchQuery('')}>
+                Clear search
+              </Button>
             </div>
           ) : (
             <div className="text-center py-16">
@@ -202,17 +233,23 @@ const Templates = () => {
             <DialogTitle>Rename Template</DialogTitle>
             <DialogDescription>Enter a new name for this template.</DialogDescription>
           </DialogHeader>
-          <Input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="Template name"
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleRename}>Save</Button>
-          </DialogFooter>
+          <form onSubmit={handleRename} className="space-y-4">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="Template name"
+              aria-label="New template name"
+              autoFocus
+            />
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setRenameDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!newName.trim()}>
+                Save
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

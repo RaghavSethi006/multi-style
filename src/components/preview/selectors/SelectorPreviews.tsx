@@ -47,12 +47,27 @@ export const CheckboxPreview = () => {
 
   if (!componentConfig.visible) return null;
 
+  const handleKeyToggle = (e: React.KeyboardEvent) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
   return (
     <div 
-      style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+      style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: activeState === 'disabled' ? 'not-allowed' : 'pointer' }}
       onClick={handleClick}
     >
-      <div style={checkboxStyles}>
+      <div
+        role="checkbox"
+        aria-checked={componentConfig.checkboxIndeterminate ? 'mixed' : componentConfig.checkboxChecked}
+        aria-disabled={activeState === 'disabled'}
+        aria-label={componentConfig.label || 'Checkbox'}
+        tabIndex={activeState === 'disabled' ? -1 : 0}
+        onKeyDown={handleKeyToggle}
+        style={checkboxStyles}
+      >
         {componentConfig.checkboxChecked && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
         {componentConfig.checkboxIndeterminate && !componentConfig.checkboxChecked && (
           <Minus size={14} color="#FFFFFF" strokeWidth={3} />
@@ -102,7 +117,7 @@ export const RadioGroupPreview = () => {
   if (!componentConfig.visible) return null;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div role="radiogroup" aria-label={componentConfig.label || 'Radio group'} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {componentConfig.label && (
         labelEdit.isEditing ? (
           <input
@@ -120,41 +135,54 @@ export const RadioGroupPreview = () => {
           </label>
         )
       )}
-      {componentConfig.radioOptions.map((option, index) => (
-        <div
-          key={index}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-          onClick={() => handleSelect(index)}
-        >
-          <div style={{
-            width: '20px',
-            height: '20px',
-            borderRadius: '50%',
-            border: `2px solid ${componentConfig.radioSelectedIndex === index ? '#3B82F6' : '#D1D5DB'}`,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
-            cursor: activeState === 'disabled' ? 'not-allowed' : 'pointer',
-            opacity: activeState === 'disabled' ? 0.5 : 1,
-          }}>
-            {componentConfig.radioSelectedIndex === index && (
-              <div style={{ 
-                width: '10px', 
-                height: '10px', 
-                borderRadius: '50%', 
-                backgroundColor: '#3B82F6' 
-              }} />
-            )}
+      {componentConfig.radioOptions.map((option, index) => {
+        const selected = componentConfig.radioSelectedIndex === index;
+        return (
+          <div
+            key={index}
+            role="radio"
+            aria-checked={selected}
+            aria-disabled={activeState === 'disabled'}
+            tabIndex={activeState === 'disabled' ? -1 : 0}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: activeState === 'disabled' ? 'not-allowed' : 'pointer' }}
+            onClick={() => handleSelect(index)}
+            onKeyDown={(e) => {
+              if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                handleSelect(index);
+              }
+            }}
+          >
+            <div style={{
+              width: '20px',
+              height: '20px',
+              borderRadius: '50%',
+              border: `2px solid ${selected ? '#3B82F6' : '#D1D5DB'}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: `all ${componentConfig.transitionDuration}ms ${componentConfig.transitionEasing}`,
+              cursor: activeState === 'disabled' ? 'not-allowed' : 'pointer',
+              opacity: activeState === 'disabled' ? 0.5 : 1,
+            }}>
+              {selected && (
+                <div style={{ 
+                  width: '10px', 
+                  height: '10px', 
+                  borderRadius: '50%', 
+                  backgroundColor: '#3B82F6' 
+                }} />
+              )}
+            </div>
+            <span style={{ 
+              fontSize: `${componentConfig.fontSize}px`,
+              color: activeState === 'disabled' ? '#9CA3AF' : '#374151',
+            }}>
+              {option}
+            </span>
           </div>
-          <span style={{ 
-            fontSize: `${componentConfig.fontSize}px`,
-            color: activeState === 'disabled' ? '#9CA3AF' : '#374151',
-          }}>
-            {option}
-          </span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
@@ -219,9 +247,17 @@ export const SwitchPreview = () => {
         flexDirection: componentConfig.switchLabelPosition === 'left' ? 'row-reverse' : 'row',
       }}
     >
-      <div style={trackStyles} onClick={handleToggle}>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={componentConfig.switchChecked}
+        aria-label={componentConfig.label || 'Toggle switch'}
+        disabled={activeState === 'disabled'}
+        style={{ ...trackStyles, border: 'none', padding: 0 }}
+        onClick={handleToggle}
+      >
         <div style={thumbStyles} />
-      </div>
+      </button>
       {labelEdit.isEditing ? (
         <input
           ref={labelEdit.inputRef as React.RefObject<HTMLInputElement>}

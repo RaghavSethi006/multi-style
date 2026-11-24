@@ -1,13 +1,11 @@
 import { useCustomizationStore } from '@/store/useCustomizationStore';
-import * as icons from 'lucide-react';
-import { LucideIcon } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { getLucideIcon } from '@/lib/icons';
 
 export const IconButton = () => {
   const { componentConfig, activeState } = useCustomizationStore();
 
-  const IconComponent = componentConfig.buttonIcon 
-    ? icons[componentConfig.buttonIcon as keyof typeof icons] as LucideIcon 
-    : icons.Settings;
+  const IconComponent = getLucideIcon(componentConfig.buttonIcon) ?? Settings;
 
   const getStateStyles = () => {
     if (activeState === 'default') return {};
