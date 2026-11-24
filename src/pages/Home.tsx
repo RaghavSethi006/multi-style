@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { categories } from '@/data/categories';
 import { useCustomizationStore } from '@/store/useCustomizationStore';
-import { Search, Filter, Sparkles, Bookmark, Package, ChevronDown, Sliders, X } from 'lucide-react';
+import { Search, Filter, Sparkles, Bookmark, Package, ChevronDown, Sliders, X, LayoutTemplate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ComponentPreviewCard } from '@/components/catalog/ComponentPreviewCard';
@@ -112,6 +112,10 @@ const Home = () => {
             <Button onClick={() => navigate('/playground')} size="lg" className="gap-2">
               <Sliders size={18} />
               Open Playground
+            </Button>
+            <Button onClick={() => navigate('/page-maker')} variant="secondary" size="lg" className="gap-2">
+              <LayoutTemplate size={18} />
+              Page Maker
             </Button>
             <Button onClick={() => navigate('/templates')} variant="outline" size="lg" className="gap-2">
               <Bookmark size={18} />

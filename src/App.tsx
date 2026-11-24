@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 
 const Playground = lazy(() => import("./pages/Playground"));
+const PageMaker = lazy(() => import("./pages/PageMaker"));
 const Templates = lazy(() => import("./pages/Templates"));
 const Frameworks = lazy(() => import("./pages/Frameworks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -29,6 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/playground" element={<Playground />} />
+            <Route path="/page-maker" element={<PageMaker />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/frameworks" element={<Frameworks />} />
             <Route path="*" element={<NotFound />} />

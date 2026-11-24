@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 const navLinks = [
   { to: '/', label: 'Catalog' },
   { to: '/playground', label: 'Playground' },
+  { to: '/page-maker', label: 'Page Maker' },
   { to: '/templates', label: 'Templates' },
   { to: '/frameworks', label: 'Frameworks' },
 ];
@@ -141,7 +142,7 @@ export const Header = () => {
             </div>
           </button>
 
-          <nav aria-label="Primary navigation" className="hidden lg:flex items-center gap-1">
+          <nav aria-label="Primary navigation" className="hidden md:flex items-center gap-1 overflow-x-auto">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.to;
               return (
@@ -149,7 +150,7 @@ export const Header = () => {
                   key={link.to}
                   to={link.to}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                    'px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
                     isActive
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'

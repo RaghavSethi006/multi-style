@@ -1,3 +1,4 @@
+import { createContext, createElement, useContext, ReactNode } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { categories } from '@/data/categories';
@@ -1054,7 +1055,7 @@ export function getCategoryForComponent(componentName: string): string {
   return found?.name ?? 'Buttons';
 }
 
-interface CustomizationState {
+export interface CustomizationState {
   selectedCategory: string;
   selectedComponent: string;
   selectedFramework: Framework;
@@ -1078,7 +1079,7 @@ interface CustomizationState {
   resetComponentConfig: () => void;
 }
 
-const buildComponentConfig = (component: string, overrides?: Partial<ComponentConfig>): ComponentConfig => ({
+export const buildComponentConfig = (component: string, overrides?: Partial<ComponentConfig>): ComponentConfig => ({
   ...defaultComponentConfig,
   ...(componentDefaults[component] || {}),
   ...(overrides || {}),
@@ -1089,7 +1090,7 @@ const buildComponentConfig = (component: string, overrides?: Partial<ComponentCo
   },
 });
 
-export const useCustomizationStore = create<CustomizationState>()(
+const useGlobalCustomizationStore = create<CustomizationState>()(
   persist(
     (set) => ({
       selectedCategory: 'Buttons',
@@ -1159,3 +1160,64 @@ export const useCustomizationStore = create<CustomizationState>()(
     }
   )
 );
+
+const ScopedCustomizationContext = createContext<CustomizationState | null>(null);
+
+export interface ScopedCustomizationProviderProps {
+  componentType: string;
+  category?: string;
+  config: ComponentConfig;
+  activeState?: ComponentState;
+  previewBackground?: PreviewBackground;
+  onUpdateConfig?: (updates: Partial<ComponentConfig>) => void;
+  onUpdateStateStyles?: (stateName: keyof ComponentConfig['stateStyles'], updates: Partial<StateStyles>) => void;
+  onResetConfig?: () => void;
+  onSetActiveState?: (state: ComponentState) => void;
+  children: ReactNode;
+}
+
+export const ScopedCustomizationProvider = ({
+  componentType,
+  category,
+  config,
+  activeState = 'default',
+  previewBackground = 'light',
+  onUpdateConfig,
+  onUpdateStateStyles,
+  onResetConfig,
+  onSetActiveState,
+  children,
+}: ScopedCustomizationProviderProps) => {
+  const global = useGlobalCustomizationStore();
+
+  const scopedState: CustomizationState = {
+    ...global,
+    selectedCategory: category ?? getCategoryForComponent(componentType),
+    selectedComponent: componentType,
+    componentConfig: config,
+    activeState,
+    previewBackground,
+    setActiveState: onSetActiveState ?? (() => undefined),
+    updateComponentConfig: onUpdateConfig ?? (() => undefined),
+    updateStateStyles: onUpdateStateStyles ?? (() => undefined),
+    resetComponentConfig: onResetConfig ?? (() => undefined),
+  };
+
+  return createElement(
+    ScopedCustomizationContext.Provider,
+    { value: scopedState },
+    children
+  );
+};
+
+function useScopedOrGlobalCustomizationStore(): CustomizationState {
+  const globalState = useGlobalCustomizationStore();
+  const scopedState = useContext(ScopedCustomizationContext);
+  return scopedState ?? globalState;
+}
+
+export const useCustomizationStore = Object.assign(useScopedOrGlobalCustomizationStore, {
+  getState: useGlobalCustomizationStore.getState,
+  setState: useGlobalCustomizationStore.setState,
+  subscribe: useGlobalCustomizationStore.subscribe,
+});
