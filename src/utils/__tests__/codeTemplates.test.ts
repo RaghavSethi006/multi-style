@@ -115,3 +115,63 @@ describe('generateComponentCode multi-framework parity', () => {
     expect(getSuggestedFileName('Progress Bar', 'winui3')).toBe('ProgressBar.xaml');
   });
 });
+
+describe('generateWinUI3Code conversion fidelity', () => {
+  it('converts CSS transparent/rgba colors, unlinked CornerRadius, gradients, and AcrylicBrush to valid WinUI 3 XAML', () => {
+    const gradientButton = generateComponentCode(
+      'winui3',
+      {
+        ...defaultComponentConfig,
+        useGradient: true,
+        gradientType: 'linear',
+        gradientStart: '#3B82F6',
+        gradientEnd: '#8B5CF6',
+        linkBorderRadius: false,
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 4,
+        borderBottomRightRadius: 12,
+        borderBottomLeftRadius: 4,
+      },
+      'Standard Button'
+    );
+    expect(gradientButton).toContain('<LinearGradientBrush');
+    expect(gradientButton).toContain('CornerRadius="12,4,12,4"');
+
+    const glassCard = generateComponentCode(
+      'winui3',
+      {
+        ...defaultComponentConfig,
+        glassmorphism: true,
+        glassOpacity: 0.25,
+      },
+      'Basic Card'
+    );
+    expect(glassCard).toContain('<AcrylicBrush');
+    expect(glassCard).toContain('TintOpacity="0.25"');
+
+    const outlineBtn = generateComponentCode(
+      'winui3',
+      {
+        ...defaultComponentConfig,
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+      },
+      'Outline Button'
+    );
+    expect(outlineBtn).toContain('Background="Transparent"');
+  });
+
+  it('generates dedicated WinUI 3 controls rather than falling back to <Button> for non-button components', () => {
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Accordion')).toContain('<Expander');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Number Input')).toContain('<NumberBox');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Autocomplete')).toContain('<AutoSuggestBox');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Nav Bar')).toContain('<NavigationView');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Tabs')).toContain('<TabView');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Modal')).toContain('<ContentDialog');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Carousel')).toContain('<FlipView');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Avatar')).toContain('<PersonPicture');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Radio Group')).toContain('<RadioButtons');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Color Picker')).toContain('<ColorPicker');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Toggle Button')).toContain('<ToggleButton');
+    expect(generateComponentCode('winui3', defaultComponentConfig, 'Pagination')).toContain('<PipsPager');
+  });
+});

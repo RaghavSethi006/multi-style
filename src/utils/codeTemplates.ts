@@ -1299,113 +1299,873 @@ if __name__ == "__main__":
     root.mainloop()`;
 };
 
+function toXamlColor(color: string, fallback = '#3B82F6'): string {
+  if (!color) return fallback;
+  const trimmed = color.trim();
+  if (trimmed.toLowerCase() === 'transparent') return 'Transparent';
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed.toUpperCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(trimmed)) {
+    return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`.toUpperCase();
+  }
+  if (/^#[0-9a-fA-F]{8}$/.test(trimmed)) {
+    // Convert CSS #RRGGBBAA to XAML #AARRGGBB
+    return `#${trimmed.slice(7, 9)}${trimmed.slice(1, 7)}`.toUpperCase();
+  }
+  const rgbaMatch = trimmed.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/i);
+  if (rgbaMatch) {
+    const toHex = (n: number) =>
+      Math.max(0, Math.min(255, Math.round(n)))
+        .toString(16)
+        .padStart(2, '0')
+        .toUpperCase();
+    const r = toHex(Number(rgbaMatch[1]));
+    const g = toHex(Number(rgbaMatch[2]));
+    const b = toHex(Number(rgbaMatch[3]));
+    if (rgbaMatch[4] !== undefined) {
+      const a = toHex(Number(rgbaMatch[4]) * 255);
+      return `#${a}${r}${g}${b}`;
+    }
+    return `#${r}${g}${b}`;
+  }
+  return fallback;
+}
+
+function toXamlFontWeight(weight: number): string {
+  if (weight <= 150) return 'Thin';
+  if (weight <= 250) return 'ExtraLight';
+  if (weight <= 350) return 'Light';
+  if (weight <= 450) return 'Normal';
+  if (weight <= 550) return 'Medium';
+  if (weight <= 650) return 'SemiBold';
+  if (weight <= 750) return 'Bold';
+  if (weight <= 850) return 'ExtraBold';
+  return 'Black';
+}
+
+function toXamlCornerRadius(config: ComponentConfig): string {
+  if (config.linkBorderRadius) {
+    return `${config.borderRadius}`;
+  }
+  return `${config.borderTopLeftRadius},${config.borderTopRightRadius},${config.borderBottomRightRadius},${config.borderBottomLeftRadius}`;
+}
+
+function toXamlTextAlignment(align: ComponentConfig['textAlign']): string {
+  switch (align) {
+    case 'center':
+      return 'Center';
+    case 'right':
+      return 'Right';
+    case 'justify':
+      return 'Justify';
+    default:
+      return 'Left';
+  }
+}
+
+function toXamlSymbol(iconName: string): string {
+  const map: Record<string, string> = {
+    Settings: 'Setting',
+    Plus: 'Add',
+    Minus: 'Remove',
+    Search: 'Find',
+    Star: 'Favorite',
+    Heart: 'Like',
+    Check: 'Accept',
+    X: 'Cancel',
+    Trash: 'Delete',
+    Trash2: 'Delete',
+    Edit: 'Edit',
+    Edit2: 'Edit',
+    Download: 'Download',
+    Upload: 'Upload',
+    Home: 'Home',
+    User: 'Contact',
+    Bell: 'Mail',
+    Mail: 'Mail',
+    Share: 'Share',
+    Copy: 'Copy',
+    Save: 'Save',
+    RefreshCw: 'Refresh',
+    ArrowRight: 'Forward',
+    ArrowLeft: 'Back',
+    ChevronRight: 'Forward',
+    ChevronLeft: 'Back',
+    Play: 'Play',
+    Pause: 'Pause',
+    Filter: 'Filter',
+    Calendar: 'Calendar',
+    Clock: 'Clock',
+    Lock: 'Permissions',
+    Eye: 'View',
+    Folder: 'Folder',
+    File: 'Document',
+    Image: 'Pictures',
+  };
+  return map[iconName] || 'Favorite';
+}
+
+function parseXamlDimension(value: string): string | null {
+  if (!value || value === 'auto' || value === '100%') return null;
+  const num = Number.parseFloat(value);
+  return Number.isFinite(num) && num > 0 ? String(num) : null;
+}
+
+function buildXamlBrushElement(
+  elementTag: string,
+  propertyName: string,
+  config: ComponentConfig,
+  indent = '    '
+): string {
+  if (config.glassmorphism) {
+    const tintOpacity = Math.max(0, Math.min(1, config.glassOpacity));
+    return `${indent}<${elementTag}.${propertyName}>\n${indent}    <AcrylicBrush TintColor="#FFFFFF" TintOpacity="${tintOpacity}" FallbackColor="#F3F4F6" />\n${indent}</${elementTag}.${propertyName}>`;
+  }
+  if (config.useGradient) {
+    const start = toXamlColor(config.gradientStart, '#3B82F6');
+    const end = toXamlColor(config.gradientEnd, '#8B5CF6');
+    if (config.gradientType === 'radial') {
+      return `${indent}<${elementTag}.${propertyName}>\n${indent}    <RadialGradientBrush Center="0.5,0.5" RadiusX="0.5" RadiusY="0.5">\n${indent}        <GradientStop Color="${start}" Offset="0" />\n${indent}        <GradientStop Color="${end}" Offset="1" />\n${indent}    </RadialGradientBrush>\n${indent}</${elementTag}.${propertyName}>`;
+    }
+    const rad = ((config.gradientAngle - 90) * Math.PI) / 180;
+    const x2 = (0.5 + 0.5 * Math.cos(rad)).toFixed(2);
+    const y2 = (0.5 + 0.5 * Math.sin(rad)).toFixed(2);
+    const x1 = (1 - Number(x2)).toFixed(2);
+    const y1 = (1 - Number(y2)).toFixed(2);
+    return `${indent}<${elementTag}.${propertyName}>\n${indent}    <LinearGradientBrush StartPoint="${x1},${y1}" EndPoint="${x2},${y2}">\n${indent}        <GradientStop Color="${start}" Offset="0" />\n${indent}        <GradientStop Color="${end}" Offset="1" />\n${indent}    </LinearGradientBrush>\n${indent}</${elementTag}.${propertyName}>`;
+  }
+  return '';
+}
+
 export const generateWinUI3Code = (
   config: ComponentConfig,
   componentName = 'Standard Button'
 ): string => {
-  const fontWeight =
-    config.fontWeight >= 700 ? 'Bold' : config.fontWeight >= 500 ? 'SemiBold' : 'Normal';
+  const fontWeight = toXamlFontWeight(config.fontWeight);
   const fontStyle = config.fontStyle === 'italic' ? 'Italic' : 'Normal';
-  const bg = toHexColor(config.backgroundColor, '#3B82F6');
-  const fg = toHexColor(config.textColor, '#FFFFFF');
-  const border = toHexColor(config.borderColor, '#D1D5DB');
+  const bg = toXamlColor(config.backgroundColor, '#3B82F6');
+  const fg = toXamlColor(config.textColor, '#FFFFFF');
+  const border = toXamlColor(config.borderColor, '#D1D5DB');
+  const cornerRadius = toXamlCornerRadius(config);
   const padding = `${config.paddingLeft},${config.paddingTop},${config.paddingRight},${config.paddingBottom}`;
   const margin = `${config.marginLeft},${config.marginTop},${config.marginRight},${config.marginBottom}`;
+  const textAlign = toXamlTextAlignment(config.textAlign);
+  const widthAttr = parseXamlDimension(config.width);
+  const heightAttr = parseXamlDimension(config.height);
+  const stretchH = config.width === '100%' || config.buttonFullWidth;
+  const hasCustomBackgroundBrush = config.useGradient || config.glassmorphism;
+
+  const extraLayoutAttrs = [
+    widthAttr ? `Width="${widthAttr}"` : null,
+    heightAttr ? `Height="${heightAttr}"` : null,
+    stretchH ? `HorizontalAlignment="Stretch"` : null,
+    config.opacity < 1 ? `Opacity="${config.opacity}"` : null,
+    !config.visible ? `Visibility="Collapsed"` : null,
+  ].filter(Boolean) as string[];
+
+  const formatAttrs = (attrs: (string | null | undefined | false)[], indent = '    ') =>
+    attrs.filter(Boolean).map((a) => `${indent}${a}`).join('\n');
 
   switch (componentName) {
+    case 'Standard Button':
+    case 'Outline Button': {
+      const isOutline = componentName === 'Outline Button';
+      const effectiveBg = isOutline ? 'Transparent' : bg;
+      const brushElement = isOutline ? '' : buildXamlBrushElement('Button', 'Background', config);
+      const iconSym = config.buttonIcon ? toXamlSymbol(config.buttonIcon) : '';
+      const hasRichContent = Boolean(config.buttonLoading || iconSym);
+      const attrs = formatAttrs([
+        !hasRichContent && `Content="${escapeHtml(config.text)}"`,
+        `FontFamily="${escapeHtml(config.fontFamily)}"`,
+        `FontSize="${config.fontSize}"`,
+        `FontWeight="${fontWeight}"`,
+        `FontStyle="${fontStyle}"`,
+        `Foreground="${fg}"`,
+        !brushElement && `Background="${effectiveBg}"`,
+        `BorderBrush="${border}"`,
+        `BorderThickness="${config.borderWidth}"`,
+        `CornerRadius="${cornerRadius}"`,
+        `Padding="${padding}"`,
+        `Margin="${margin}"`,
+        config.buttonLoading && `IsEnabled="False"`,
+        ...extraLayoutAttrs,
+        !stretchH && `HorizontalAlignment="Center"`,
+        `VerticalAlignment="Center"`,
+      ]);
+
+      if (!hasRichContent && !brushElement) {
+        return `<Button\n${attrs} />`;
+      }
+
+      const innerContent = hasRichContent
+        ? `    <StackPanel Orientation="Horizontal" Spacing="${config.gap}">\n${
+            config.buttonLoading
+              ? `        <ProgressRing Width="${config.fontSize}" Height="${config.fontSize}" IsActive="True" />\n`
+              : iconSym && config.buttonIconPosition === 'left'
+                ? `        <SymbolIcon Symbol="${iconSym}" />\n`
+                : ''
+          }        <TextBlock Text="${escapeHtml(config.text)}" VerticalAlignment="Center" />\n${
+            !config.buttonLoading && iconSym && config.buttonIconPosition === 'right'
+              ? `        <SymbolIcon Symbol="${iconSym}" />\n`
+              : ''
+          }    </StackPanel>`
+        : '';
+
+      return `<Button\n${attrs}>\n${[brushElement, innerContent].filter(Boolean).join('\n')}\n</Button>`;
+    }
+
+    case 'Icon Button': {
+      const sym = toXamlSymbol(config.buttonIcon || 'Settings');
+      const brushElement = buildXamlBrushElement('Button', 'Background', config);
+      const attrs = formatAttrs([
+        `Width="${widthAttr || '44'}"`,
+        `Height="${heightAttr || '44'}"`,
+        `Foreground="${fg}"`,
+        !brushElement && `Background="${bg}"`,
+        `BorderBrush="${border}"`,
+        `BorderThickness="${config.borderWidth}"`,
+        `CornerRadius="${config.iconButtonShape === 'circle' ? '22' : cornerRadius}"`,
+        `Margin="${margin}"`,
+        config.iconButtonTooltip && `ToolTipService.ToolTip="${escapeHtml(config.iconButtonTooltip)}"`,
+        `AutomationProperties.Name="${escapeHtml(config.iconButtonTooltip || 'Icon action')}"`,
+      ]);
+      return `<Button\n${attrs}>\n${brushElement ? `${brushElement}\n` : ''}    <SymbolIcon Symbol="${sym}" />\n</Button>`;
+    }
+
+    case 'FAB Button': {
+      const sym = toXamlSymbol(config.buttonIcon || 'Plus');
+      const brushElement = buildXamlBrushElement('Button', 'Background', config);
+      const hAlign = config.fabPosition.includes('left') ? 'Left' : 'Right';
+      const vAlign = config.fabPosition.includes('top') ? 'Top' : 'Bottom';
+      const attrs = formatAttrs([
+        !config.fabExtended && `Width="56"`,
+        `Height="56"`,
+        `Foreground="${fg}"`,
+        !brushElement && `Background="${bg}"`,
+        `BorderBrush="${border}"`,
+        `BorderThickness="${config.borderWidth}"`,
+        `CornerRadius="${config.fabExtended ? cornerRadius : '28'}"`,
+        `Padding="${config.fabExtended ? padding : '0'}"`,
+        `HorizontalAlignment="${hAlign}"`,
+        `VerticalAlignment="${vAlign}"`,
+        `Margin="24"`,
+        `AutomationProperties.Name="${escapeHtml(config.text || 'Floating action')}"`,
+      ]);
+      const inner = config.fabExtended
+        ? `    <StackPanel Orientation="Horizontal" Spacing="8">\n        <SymbolIcon Symbol="${sym}" />\n        <TextBlock Text="${escapeHtml(config.text)}" VerticalAlignment="Center" FontWeight="${fontWeight}" />\n    </StackPanel>`
+        : `    <SymbolIcon Symbol="${sym}" />`;
+      return `<Button\n${attrs}>\n${brushElement ? `${brushElement}\n` : ''}${inner}\n</Button>`;
+    }
+
+    case 'Toggle Button': {
+      const attrs = formatAttrs([
+        `Content="${escapeHtml(config.toggleSelected ? config.toggleOnLabel : config.toggleOffLabel)}"`,
+        `IsChecked="${config.toggleSelected ? 'True' : 'False'}"`,
+        `FontFamily="${escapeHtml(config.fontFamily)}"`,
+        `FontSize="${config.fontSize}"`,
+        `FontWeight="${fontWeight}"`,
+        `Foreground="${fg}"`,
+        `Background="${bg}"`,
+        `BorderBrush="${border}"`,
+        `BorderThickness="${config.borderWidth}"`,
+        `CornerRadius="${cornerRadius}"`,
+        `Padding="${padding}"`,
+        `Margin="${margin}"`,
+      ]);
+      return `<ToggleButton\n${attrs} />`;
+    }
+
     case 'Heading':
     case 'Paragraph':
-    case 'Label':
-      return `<TextBlock
-    Text="${escapeHtml(config.text)}"
-    FontFamily="${escapeHtml(config.fontFamily)}"
-    FontSize="${config.fontSize}"
-    FontWeight="${fontWeight}"
-    FontStyle="${fontStyle}"
-    Foreground="${fg}"
-    Margin="${margin}"
-    TextWrapping="Wrap" />`;
+    case 'Label': {
+      const headingScale: Record<number, number> = { 1: 36, 2: 30, 3: 24, 4: 20, 5: 18, 6: 16 };
+      const effectiveSize =
+        componentName === 'Heading'
+          ? headingScale[config.headingLevel] || config.fontSize
+          : config.fontSize;
+      const decorations =
+        config.textDecoration === 'underline'
+          ? 'Underline'
+          : config.textDecoration === 'line-through'
+            ? 'Strikethrough'
+            : null;
+      const attrs = formatAttrs([
+        `Text="${escapeHtml(config.text)}"`,
+        `FontFamily="${escapeHtml(config.fontFamily)}"`,
+        `FontSize="${effectiveSize}"`,
+        `FontWeight="${fontWeight}"`,
+        `FontStyle="${fontStyle}"`,
+        `Foreground="${toXamlColor(config.textColor, '#111827')}"`,
+        `TextAlignment="${textAlign}"`,
+        decorations && `TextDecorations="${decorations}"`,
+        `LineHeight="${Math.round(effectiveSize * config.lineHeight)}"`,
+        `CharacterSpacing="${Math.round(config.letterSpacing * 100)}"`,
+        `Margin="${margin}"`,
+        componentName === 'Paragraph' && `MaxWidth="600"`,
+        ...extraLayoutAttrs,
+        `TextWrapping="Wrap"`,
+      ]);
+      if (componentName === 'Label' && config.inputRequired) {
+        return `<StackPanel Orientation="Horizontal" Spacing="4" Margin="${margin}">\n    <TextBlock Text="${escapeHtml(config.text)}" FontFamily="${escapeHtml(config.fontFamily)}" FontSize="${effectiveSize}" FontWeight="${fontWeight}" Foreground="${toXamlColor(config.textColor, '#111827')}" />\n    <TextBlock Text="*" Foreground="#EF4444" FontSize="${effectiveSize}" FontWeight="Bold" />\n</StackPanel>`;
+      }
+      return `<TextBlock\n${attrs} />`;
+    }
 
-    case 'Text Field':
-    case 'Search Field':
-    case 'Text Area':
-      return `<TextBox
-    Header="${escapeHtml(config.label)}"
-    PlaceholderText="${escapeHtml(config.placeholder)}"
-    FontFamily="${escapeHtml(config.fontFamily)}"
-    FontSize="${config.fontSize}"
-    Foreground="${fg}"
-    Background="${bg}"
+    case 'Blockquote': {
+      return `<Border
+    Background="${toXamlColor(config.backgroundColor, '#F9FAFB')}"
+    BorderBrush="${toXamlColor(config.borderColor, '#3B82F6')}"
+    BorderThickness="${Math.max(4, config.borderWidth)},0,0,0"
+    CornerRadius="${cornerRadius}"
+    Padding="${padding}"
+    Margin="${margin}"
+    MaxWidth="600">
+    <StackPanel Spacing="8">
+        <TextBlock
+            Text="&quot;${escapeHtml(config.text)}&quot;"
+            FontFamily="${escapeHtml(config.fontFamily)}"
+            FontSize="${config.fontSize}"
+            FontStyle="${fontStyle}"
+            Foreground="${toXamlColor(config.textColor, '#374151')}"
+            TextWrapping="Wrap" />${
+              config.blockquoteAuthor
+                ? `\n        <TextBlock Text="— ${escapeHtml(config.blockquoteAuthor)}" FontSize="${Math.max(12, config.fontSize - 2)}" Foreground="#6B7280" />`
+                : ''
+            }
+    </StackPanel>
+</Border>`;
+    }
+
+    case 'Code Block':
+    case 'Code Editor': {
+      return `<Border
+    Background="${toXamlColor(config.backgroundColor, '#1E1E1E')}"
     BorderBrush="${border}"
     BorderThickness="${config.borderWidth}"
-    CornerRadius="${config.borderRadius}"
+    CornerRadius="${cornerRadius}"
     Padding="${padding}"
-    AcceptsReturn="${componentName === 'Text Area' ? 'True' : 'False'}" />`;
+    Margin="${margin}"
+    MaxWidth="600">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto">
+        <TextBlock
+            Text="${escapeHtml(config.codeContent)}"
+            FontFamily="Cascadia Code, Consolas"
+            FontSize="${config.fontSize}"
+            Foreground="${toXamlColor(config.textColor, '#E5E7EB')}"
+            IsTextSelectionEnabled="True" />
+    </ScrollViewer>
+</Border>`;
+    }
 
-    case 'Password Input':
+    case 'Text Field':
+    case 'Text Area': {
+      const attrs = formatAttrs([
+        config.label && `Header="${escapeHtml(config.label)}${config.inputRequired ? ' *' : ''}"`,
+        `PlaceholderText="${escapeHtml(config.placeholder)}"`,
+        `FontFamily="${escapeHtml(config.fontFamily)}"`,
+        `FontSize="${config.fontSize}"`,
+        `Foreground="${toXamlColor(config.textColor, '#111827')}"`,
+        !hasCustomBackgroundBrush && `Background="${bg}"`,
+        `BorderBrush="${config.inputValidationState === 'error' ? '#EF4444' : config.inputValidationState === 'success' ? '#22C55E' : border}"`,
+        `BorderThickness="${config.borderWidth}"`,
+        `CornerRadius="${cornerRadius}"`,
+        `Padding="${padding}"`,
+        `Margin="${margin}"`,
+        `Width="${widthAttr || '280'}"`,
+        componentName === 'Text Area' && `AcceptsReturn="True"`,
+        componentName === 'Text Area' && `TextWrapping="Wrap"`,
+        componentName === 'Text Area' && `MinHeight="${config.textareaRows * 24}"`,
+      ]);
+      const control = `<TextBox\n${attrs} />`;
+      if (config.inputHelperText) {
+        const helperColor =
+          config.inputValidationState === 'error'
+            ? '#EF4444'
+            : config.inputValidationState === 'success'
+              ? '#22C55E'
+              : '#6B7280';
+        return `<StackPanel Spacing="4">\n${control.replace(/^/gm, '    ')}\n    <TextBlock Text="${escapeHtml(config.inputHelperText)}" FontSize="12" Foreground="${helperColor}" />\n</StackPanel>`;
+      }
+      return control;
+    }
+
+    case 'Search Field': {
+      return `<AutoSuggestBox
+    Header="${escapeHtml(config.label)}"
+    PlaceholderText="${escapeHtml(config.placeholder)}"
+    QueryIcon="Find"
+    FontFamily="${escapeHtml(config.fontFamily)}"
+    FontSize="${config.fontSize}"
+    CornerRadius="${cornerRadius}"
+    Width="${widthAttr || '320'}"
+    Margin="${margin}" />`;
+    }
+
+    case 'Password Input': {
       return `<PasswordBox
     Header="${escapeHtml(config.label)}"
     PlaceholderText="${escapeHtml(config.placeholder)}"
-    CornerRadius="${config.borderRadius}" />`;
+    FontFamily="${escapeHtml(config.fontFamily)}"
+    FontSize="${config.fontSize}"
+    Foreground="${toXamlColor(config.textColor, '#111827')}"
+    Background="${bg}"
+    BorderBrush="${border}"
+    BorderThickness="${config.borderWidth}"
+    CornerRadius="${cornerRadius}"
+    Padding="${padding}"
+    Margin="${margin}"
+    Width="${widthAttr || '280'}" />`;
+    }
 
-    case 'Checkbox':
+    case 'Number Input': {
+      return `<NumberBox
+    Header="${escapeHtml(config.label)}"
+    Value="0"
+    SpinButtonPlacementMode="Inline"
+    FontFamily="${escapeHtml(config.fontFamily)}"
+    FontSize="${config.fontSize}"
+    CornerRadius="${cornerRadius}"
+    Margin="${margin}"
+    Width="${widthAttr || '200'}" />`;
+    }
+
+    case 'File Upload': {
+      return `<Border
+    AllowDrop="True"
+    Background="${toXamlColor(config.backgroundColor, '#F9FAFB')}"
+    BorderBrush="${border}"
+    BorderThickness="${Math.max(1, config.borderWidth)}"
+    CornerRadius="${cornerRadius}"
+    Padding="${padding}"
+    Margin="${margin}"
+    Width="${widthAttr || '320'}">
+    <StackPanel HorizontalAlignment="Center" Spacing="10">
+        <SymbolIcon Symbol="OpenFile" />
+        <TextBlock Text="${config.fileDragDrop ? 'Drag and drop or click to upload' : 'Select a file to upload'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+        <TextBlock Text="Accepted: ${escapeHtml(config.fileAccept)}${config.fileMultiple ? ' (Multiple)' : ''}" FontSize="12" Foreground="#6B7280" HorizontalAlignment="Center" />
+        <Button Content="Browse files" HorizontalAlignment="Center" />
+    </StackPanel>
+</Border>`;
+    }
+
+    case 'Color Picker': {
+      return `<StackPanel Spacing="8">
+    <TextBlock Text="${escapeHtml(config.label)}" FontWeight="SemiBold" />
+    <ColorPicker
+        Color="${toXamlColor(config.backgroundColor, '#3B82F6')}"
+        IsColorSliderVisible="True"
+        IsColorChannelTextInputVisible="True"
+        IsHexInputVisible="True"
+        IsAlphaEnabled="False" />
+</StackPanel>`;
+    }
+
+    case 'Checkbox': {
+      const checkedAttr = config.checkboxIndeterminate
+        ? '{x:Null}'
+        : config.checkboxChecked
+          ? 'True'
+          : 'False';
       return `<CheckBox
     Content="${escapeHtml(config.label)}"
-    IsChecked="${config.checkboxChecked ? 'True' : 'False'}"
-    FontSize="${config.fontSize}" />`;
+    IsThreeState="${config.checkboxIndeterminate ? 'True' : 'False'}"
+    IsChecked="${checkedAttr}"
+    FontFamily="${escapeHtml(config.fontFamily)}"
+    FontSize="${config.fontSize}"
+    Foreground="${toXamlColor(config.textColor, '#111827')}"
+    Margin="${margin}" />`;
+    }
 
-    case 'Switch':
+    case 'Radio Group': {
+      const items = config.radioOptions
+        .map((opt) => `    <x:String>${escapeHtml(opt)}</x:String>`)
+        .join('\n');
+      return `<RadioButtons
+    Header="${escapeHtml(config.label)}"
+    SelectedIndex="${config.radioSelectedIndex}"
+    Margin="${margin}">
+${items}
+</RadioButtons>`;
+    }
+
+    case 'Switch': {
       return `<ToggleSwitch
     Header="${escapeHtml(config.label)}"
-    IsOn="${config.switchChecked ? 'True' : 'False'}" />`;
+    IsOn="${config.switchChecked ? 'True' : 'False'}"
+    FontFamily="${escapeHtml(config.fontFamily)}"
+    FontSize="${config.fontSize}"
+    Margin="${margin}" />`;
+    }
 
-    case 'Range Slider':
+    case 'Range Slider': {
       return `<Slider
     Header="${escapeHtml(config.label)}"
     Minimum="${config.sliderMin}"
     Maximum="${config.sliderMax}"
     StepFrequency="${config.sliderStep}"
-    Value="${config.sliderValue}" />`;
+    Value="${config.sliderValue}"
+    Width="${widthAttr || '280'}"
+    Margin="${margin}" />`;
+    }
 
-    case 'Dropdown':
-    case 'Autocomplete':
+    case 'Dropdown': {
+      const items = config.dropdownOptions
+        .map((opt) => `    <x:String>${escapeHtml(opt)}</x:String>`)
+        .join('\n');
       return `<ComboBox
     Header="${escapeHtml(config.label)}"
     PlaceholderText="${escapeHtml(config.dropdownPlaceholder)}"
-    CornerRadius="${config.borderRadius}">
-${config.dropdownOptions.map((opt) => `    <x:String>${escapeHtml(opt)}</x:String>`).join('\n')}
-</ComboBox>`;
-
-    case 'Progress Bar':
-      return `<ProgressBar
-    Value="${config.progressValue}"
-    Maximum="100"
-    CornerRadius="${config.borderRadius}" />`;
-
-    case 'Alert':
-      return `<InfoBar
-    IsOpen="True"
-    Severity="${config.alertType === 'error' ? 'Error' : config.alertType === 'warning' ? 'Warning' : config.alertType === 'success' ? 'Success' : 'Informational'}"
-    Title="${escapeHtml(config.alertTitle)}"
-    Message="${escapeHtml(config.alertMessage)}" />`;
-
-    default:
-      return `<Button
-    Content="${escapeHtml(config.text)}"
+    SelectedIndex="${config.dropdownSelectedIndex}"
     FontFamily="${escapeHtml(config.fontFamily)}"
     FontSize="${config.fontSize}"
-    FontWeight="${fontWeight}"
-    FontStyle="${fontStyle}"
-    Foreground="${fg}"
+    CornerRadius="${cornerRadius}"
+    Width="${widthAttr || '280'}"
+    Margin="${margin}">
+${items}
+</ComboBox>`;
+    }
+
+    case 'Autocomplete': {
+      const items = config.dropdownOptions
+        .map((opt) => `        <x:String>${escapeHtml(opt)}</x:String>`)
+        .join('\n');
+      return `<AutoSuggestBox
+    Header="${escapeHtml(config.label)}"
+    PlaceholderText="${escapeHtml(config.dropdownPlaceholder)}"
+    QueryIcon="Find"
+    CornerRadius="${cornerRadius}"
+    Width="${widthAttr || '280'}"
+    Margin="${margin}">
+    <AutoSuggestBox.ItemsSource>
+${items}
+    </AutoSuggestBox.ItemsSource>
+</AutoSuggestBox>`;
+    }
+
+    case 'Nav Bar': {
+      const items = config.navbarItems
+        .map((item) => `        <NavigationViewItem Content="${escapeHtml(item)}" />`)
+        .join('\n');
+      return `<NavigationView
+    PaneDisplayMode="${config.navbarOrientation === 'horizontal' ? 'Top' : 'Left'}"
+    IsBackButtonVisible="Collapsed"
+    IsSettingsVisible="False">
+    <NavigationView.MenuItems>
+${items}
+    </NavigationView.MenuItems>
+</NavigationView>`;
+    }
+
+    case 'Tabs': {
+      const items = config.tabItems
+        .map(
+          (tab, idx) =>
+            `        <TabViewItem Header="${escapeHtml(tab)}" IsClosable="False"${idx === config.tabActiveIndex ? ' IsSelected="True"' : ''}>\n            <TextBlock Text="${escapeHtml(tab)} content" Padding="16" />\n        </TabViewItem>`
+        )
+        .join('\n');
+      return `<TabView IsAddTabButtonVisible="False">\n    <TabView.TabItems>\n${items}\n    </TabView.TabItems>\n</TabView>`;
+    }
+
+    case 'Breadcrumbs': {
+      const sep = config.breadcrumbSeparator === 'arrow' ? '→' : config.breadcrumbSeparator === 'slash' ? '/' : '›';
+      const nodes = config.breadcrumbItems
+        .map((item, idx) => {
+          const isLast = idx === config.breadcrumbItems.length - 1;
+          const label = `    <TextBlock Text="${escapeHtml(item)}" FontWeight="${isLast ? 'SemiBold' : 'Normal'}" Foreground="${isLast ? toXamlColor(config.textColor, '#111827') : '#6B7280'}" />`;
+          return idx < config.breadcrumbItems.length - 1
+            ? `${label}\n    <TextBlock Text="${sep}" Foreground="#9CA3AF" />`
+            : label;
+        })
+        .join('\n');
+      return `<StackPanel Orientation="Horizontal" Spacing="8" Margin="${margin}">\n${nodes}\n</StackPanel>`;
+    }
+
+    case 'Pagination': {
+      const totalPages = Math.max(1, Math.ceil(config.paginationTotal / config.paginationPageSize));
+      return `<PipsPager
+    NumberOfPages="${totalPages}"
+    SelectedPageIndex="${Math.max(0, config.paginationCurrent - 1)}"
+    PreviousButtonVisibility="Visible"
+    NextButtonVisibility="Visible" />`;
+    }
+
+    case 'Stepper': {
+      const orient = config.stepperOrientation === 'horizontal' ? 'Horizontal' : 'Vertical';
+      const steps = config.stepperSteps
+        .map((step, idx) => {
+          const active = idx <= config.stepperCurrentStep;
+          return `    <StackPanel Orientation="Horizontal" Spacing="8">\n        <Border Width="28" Height="28" CornerRadius="14" Background="${active ? '#3B82F6' : '#E5E7EB'}">\n            <TextBlock Text="${idx + 1}" Foreground="${active ? '#FFFFFF' : '#6B7280'}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" />\n        </Border>\n        <TextBlock Text="${escapeHtml(step)}" VerticalAlignment="Center" FontWeight="${idx === config.stepperCurrentStep ? 'SemiBold' : 'Normal'}" />\n    </StackPanel>`;
+        })
+        .join('\n');
+      return `<StackPanel Orientation="${orient}" Spacing="16" Margin="${margin}">\n${steps}\n</StackPanel>`;
+    }
+
+    case 'Basic Card':
+    case 'Image Card':
+    case 'Profile Card': {
+      const brushElement = buildXamlBrushElement('Border', 'Background', config);
+      const borderAttrs = formatAttrs([
+        !brushElement && `Background="${toXamlColor(config.backgroundColor, '#FFFFFF')}"`,
+        `BorderBrush="${border}"`,
+        `BorderThickness="${config.borderWidth}"`,
+        `CornerRadius="${cornerRadius}"`,
+        `Padding="${padding}"`,
+        `Margin="${margin}"`,
+        `Width="${widthAttr || '320'}"`,
+      ]);
+      if (componentName === 'Profile Card') {
+        return `<Border\n${borderAttrs}>\n${brushElement ? `${brushElement}\n` : ''}    <StackPanel HorizontalAlignment="Center" Spacing="10">\n        <PersonPicture DisplayName="${escapeHtml(config.profileName)}" Width="72" Height="72" />\n        <TextBlock Text="${escapeHtml(config.profileName)}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" />\n        <TextBlock Text="${escapeHtml(config.profileRole)}" FontSize="13" Foreground="#6B7280" HorizontalAlignment="Center" />\n        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">\n            <Button Content="Follow" Style="{StaticResource AccentButtonStyle}" />\n            <Button Content="Message" />\n        </StackPanel>\n    </StackPanel>\n</Border>`;
+      }
+      const sections: string[] = [];
+      if (componentName === 'Image Card') {
+        sections.push(
+          `        <Image Source="${escapeHtml(config.cardImage || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400')}" Height="180" Stretch="UniformToFill" />`
+        );
+      }
+      if (config.cardShowHeader) {
+        sections.push(
+          `        <StackPanel Spacing="4">\n            <TextBlock Text="${escapeHtml(config.cardTitle)}" FontSize="18" FontWeight="SemiBold" />\n            <TextBlock Text="${escapeHtml(config.cardSubtitle)}" FontSize="13" Foreground="#6B7280" />\n        </StackPanel>`
+        );
+      }
+      sections.push(
+        `        <TextBlock Text="${escapeHtml(config.text)}" TextWrapping="Wrap" FontSize="${config.fontSize}" />`
+      );
+      if (config.cardShowFooter) {
+        sections.push(
+          `        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">\n            <Button Content="Cancel" />\n            <Button Content="Confirm" Style="{StaticResource AccentButtonStyle}" />\n        </StackPanel>`
+        );
+      }
+      return `<Border\n${borderAttrs}>\n${brushElement ? `${brushElement}\n` : ''}    <StackPanel Spacing="12">\n${sections.join('\n')}\n    </StackPanel>\n</Border>`;
+    }
+
+    case 'Accordion': {
+      const expanders = config.accordionItems
+        .map(
+          (item, idx) =>
+            `    <Expander\n        Header="${escapeHtml(item.title)}"\n        IsExpanded="${config.accordionDefaultOpen.includes(idx) ? 'True' : 'False'}"\n        HorizontalAlignment="Stretch"\n        HorizontalContentAlignment="Left">\n        <TextBlock Text="${escapeHtml(item.content)}" TextWrapping="Wrap" />\n    </Expander>`
+        )
+        .join('\n');
+      return `<StackPanel Width="${widthAttr || '400'}" Spacing="4" Margin="${margin}">\n${expanders}\n</StackPanel>`;
+    }
+
+    case 'Alert':
+    case 'Toast': {
+      const severity =
+        config.alertType === 'error'
+          ? 'Error'
+          : config.alertType === 'warning'
+            ? 'Warning'
+            : config.alertType === 'success'
+              ? 'Success'
+              : 'Informational';
+      return `<InfoBar
+    IsOpen="True"
+    Severity="${severity}"
+    Title="${escapeHtml(componentName === 'Alert' ? config.alertTitle : config.alertType.toUpperCase())}"
+    Message="${escapeHtml(componentName === 'Alert' ? config.alertMessage : config.text)}"
+    IsClosable="${config.alertDismissible ? 'True' : 'False'}" />`;
+    }
+
+    case 'Modal': {
+      return `<ContentDialog
+    Title="${escapeHtml(config.modalTitle)}"
+    PrimaryButtonText="Confirm"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    CornerRadius="${cornerRadius}">
+    <TextBlock Text="${escapeHtml(config.text)}" TextWrapping="Wrap" FontSize="${config.fontSize}" />
+</ContentDialog>`;
+    }
+
+    case 'Badge': {
+      return `<Border
     Background="${bg}"
     BorderBrush="${border}"
     BorderThickness="${config.borderWidth}"
-    CornerRadius="${config.borderRadius}"
+    CornerRadius="999"
     Padding="${padding}"
-    Margin="${margin}"
-    Opacity="${config.opacity}"
-    HorizontalAlignment="Center"
-    VerticalAlignment="Center" />`;
+    HorizontalAlignment="Left">
+    <TextBlock
+        Text="${escapeHtml(config.badgeContent)}"
+        FontSize="${config.fontSize}"
+        FontWeight="${fontWeight}"
+        Foreground="${fg}" />
+</Border>`;
+    }
+
+    case 'Progress Bar': {
+      return `<StackPanel Width="${widthAttr || '300'}" Spacing="6" Margin="${margin}">\n${
+        config.progressShowLabel
+          ? `    <Grid>\n        <TextBlock Text="Progress" FontSize="13" />\n        <TextBlock Text="${config.progressValue}%" FontWeight="SemiBold" HorizontalAlignment="Right" />\n    </Grid>\n`
+          : ''
+      }    <ProgressBar
+        Value="${config.progressValue}"
+        Maximum="100"
+        Foreground="${toXamlColor(config.textColor, '#3B82F6')}"
+        Background="${toXamlColor(config.backgroundColor, '#E5E7EB')}"
+        CornerRadius="${cornerRadius}" />\n</StackPanel>`;
+    }
+
+    case 'Skeleton': {
+      const isCircle = config.skeletonVariant === 'circular';
+      return `<Border
+    Width="${isCircle ? '48' : '300'}"
+    Height="${isCircle ? '48' : config.skeletonVariant === 'text' ? '16' : '120'}"
+    CornerRadius="${isCircle ? '24' : cornerRadius}"
+    Background="${toXamlColor(config.backgroundColor, '#E5E7EB')}"
+    Opacity="0.7" />`;
+    }
+
+    case 'Tooltip': {
+      return `<Button
+    Content="${escapeHtml(config.text)}"
+    ToolTipService.ToolTip="${escapeHtml(config.tooltipContent)}"
+    ToolTipService.Placement="${config.tooltipPosition.charAt(0).toUpperCase() + config.tooltipPosition.slice(1)}" />`;
+    }
+
+    case 'Simple List':
+    case 'Icon List':
+    case 'Checkbox List':
+    case 'Ordered List': {
+      const items = config.listItems
+        .map((item, idx) => {
+          if (componentName === 'Icon List') {
+            return `    <ListViewItem>\n        <StackPanel Orientation="Horizontal" Spacing="8">\n            <SymbolIcon Symbol="Accept" Foreground="#22C55E" />\n            <TextBlock Text="${escapeHtml(item)}" />\n        </StackPanel>\n    </ListViewItem>`;
+          }
+          if (componentName === 'Checkbox List') {
+            return `    <ListViewItem>\n        <CheckBox Content="${escapeHtml(item)}" />\n    </ListViewItem>`;
+          }
+          const prefix = componentName === 'Ordered List' ? `${idx + 1}. ` : '• ';
+          return `    <ListViewItem Content="${prefix}${escapeHtml(item)}" />`;
+        })
+        .join('\n');
+      return `<ListView SelectionMode="${componentName === 'Checkbox List' ? 'Multiple' : 'None'}" Margin="${margin}">\n${items}\n</ListView>`;
+    }
+
+    case 'Table': {
+      const colDefs = config.tableColumns.map(() => `        <ColumnDefinition Width="*" />`).join('\n');
+      const headerCells = config.tableColumns
+        .map(
+          (col, cIdx) =>
+            `    <TextBlock Grid.Row="0" Grid.Column="${cIdx}" Text="${escapeHtml(col)}" FontWeight="SemiBold" Padding="10" />`
+        )
+        .join('\n');
+      const rowDefs = Array.from({ length: config.tableRows.length + 1 }, () => `        <RowDefinition Height="Auto" />`).join('\n');
+      const bodyCells = config.tableRows
+        .flatMap((row, rIdx) =>
+          row.map(
+            (cell, cIdx) =>
+              `    <TextBlock Grid.Row="${rIdx + 1}" Grid.Column="${cIdx}" Text="${escapeHtml(cell)}" Padding="10" />`
+          )
+        )
+        .join('\n');
+      return `<Grid BorderBrush="${border}" BorderThickness="1" CornerRadius="${cornerRadius}">\n    <Grid.ColumnDefinitions>\n${colDefs}\n    </Grid.ColumnDefinitions>\n    <Grid.RowDefinitions>\n${rowDefs}\n    </Grid.RowDefinitions>\n${headerCells}\n${bodyCells}\n</Grid>`;
+    }
+
+    case 'Grid': {
+      const tiles = Array.from(
+        { length: config.gridItems },
+        (_, i) => `    <Border Background="#EFF6FF" CornerRadius="8" Padding="16"><TextBlock Text="${i + 1}" HorizontalAlignment="Center" /></Border>`
+      ).join('\n');
+      return `<GridView SelectionMode="None">\n${tiles}\n</GridView>`;
+    }
+
+    case 'Timeline': {
+      const nodes = config.timelineItems
+        .map(
+          (item) =>
+            `    <StackPanel Spacing="2">\n        <TextBlock Text="${escapeHtml(item.date)}" FontSize="12" Foreground="#6B7280" />\n        <TextBlock Text="${escapeHtml(item.title)}" FontWeight="SemiBold" />\n        <TextBlock Text="${escapeHtml(item.description)}" Foreground="#4B5563" TextWrapping="Wrap" />\n    </StackPanel>`
+        )
+        .join('\n');
+      return `<StackPanel Orientation="${config.timelineOrientation === 'horizontal' ? 'Horizontal' : 'Vertical'}" Spacing="16" Margin="${margin}">\n${nodes}\n</StackPanel>`;
+    }
+
+    case 'Carousel': {
+      const slides = config.carouselItems
+        .map(
+          (slide) =>
+            `    <FlipViewItem>\n        <Border Background="#F3F4F6" CornerRadius="${cornerRadius}">\n            <TextBlock Text="${escapeHtml(slide)}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="SemiBold" />\n        </Border>\n    </FlipViewItem>`
+        )
+        .join('\n');
+      return `<FlipView Width="400" Height="200">\n${slides}\n</FlipView>`;
+    }
+
+    case 'Image': {
+      return `<Border CornerRadius="${cornerRadius}" Width="${widthAttr || '300'}" Height="${heightAttr || '200'}">
+    <Image
+        Source="${escapeHtml(config.imageSrc)}"
+        AutomationProperties.Name="${escapeHtml(config.imageAlt)}"
+        Stretch="${config.imageObjectFit === 'contain' ? 'Uniform' : config.imageObjectFit === 'fill' ? 'Fill' : 'UniformToFill'}" />
+</Border>`;
+    }
+
+    case 'Avatar': {
+      const sizeMap = { xs: 24, sm: 32, md: 40, lg: 56, xl: 72 };
+      const px = sizeMap[config.avatarSize] || 40;
+      return `<PersonPicture
+    DisplayName="${escapeHtml(config.avatarFallback)}"
+    Initials="${escapeHtml(config.avatarFallback.slice(0, 2))}"
+    Width="${px}"
+    Height="${px}" />`;
+    }
+
+    case 'Icon': {
+      const sym = toXamlSymbol(config.iconName || 'Star');
+      return `<SymbolIcon Symbol="${sym}" Foreground="${toXamlColor(config.textColor, '#3B82F6')}" />`;
+    }
+
+    case 'Chart': {
+      return `<Border Background="${toXamlColor(config.backgroundColor, '#FFFFFF')}" BorderBrush="${border}" BorderThickness="${config.borderWidth}" CornerRadius="${cornerRadius}" Padding="16">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom" Spacing="12" Height="140">
+        <Rectangle Width="28" Height="56" Fill="#3B82F6" RadiusX="4" RadiusY="4" VerticalAlignment="Bottom" />
+        <Rectangle Width="28" Height="98" Fill="#3B82F6" RadiusX="4" RadiusY="4" VerticalAlignment="Bottom" />
+        <Rectangle Width="28" Height="70" Fill="#3B82F6" RadiusX="4" RadiusY="4" VerticalAlignment="Bottom" />
+        <Rectangle Width="28" Height="126" Fill="#3B82F6" RadiusX="4" RadiusY="4" VerticalAlignment="Bottom" />
+        <Rectangle Width="28" Height="84" Fill="#3B82F6" RadiusX="4" RadiusY="4" VerticalAlignment="Bottom" />
+    </StackPanel>
+</Border>`;
+    }
+
+    case 'Drag & Drop': {
+      return `<Border
+    AllowDrop="True"
+    CanDrag="True"
+    Background="${toXamlColor(config.backgroundColor, '#F9FAFB')}"
+    BorderBrush="${border}"
+    BorderThickness="2"
+    CornerRadius="${cornerRadius}"
+    Padding="24">
+    <TextBlock Text="${escapeHtml(config.text || 'Drag and drop items here')}" HorizontalAlignment="Center" />
+</Border>`;
+    }
+
+    case 'Split Pane': {
+      return `<SplitView IsPaneOpen="True" DisplayMode="Inline" OpenPaneLength="220">
+    <SplitView.Pane>
+        <Border Background="#F3F4F6" Padding="16">
+            <TextBlock Text="Left Pane" FontWeight="SemiBold" />
+        </Border>
+    </SplitView.Pane>
+    <Border Padding="16">
+        <TextBlock Text="Main Content Pane" />
+    </Border>
+</SplitView>`;
+    }
+
+    default: {
+      return `<Border
+    Background="${bg}"
+    BorderBrush="${border}"
+    BorderThickness="${config.borderWidth}"
+    CornerRadius="${cornerRadius}"
+    Padding="${padding}"
+    Margin="${margin}">
+    <TextBlock
+        Text="${escapeHtml(config.text || componentName)}"
+        FontFamily="${escapeHtml(config.fontFamily)}"
+        FontSize="${config.fontSize}"
+        Foreground="${fg}" />
+</Border>`;
+    }
   }
 };
 
